@@ -9,7 +9,7 @@ type AuthContextType = {
   error: string | null;
 };
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   login: () => {},
   logout: () => {},

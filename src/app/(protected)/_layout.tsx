@@ -1,9 +1,9 @@
-import { Redirect, Slot } from 'expo-router';
+import { Redirect, Slot, Stack } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 export default function ProtectedLayout() {
-  const session = false;
-  return !session ? <Redirect href="/" /> : <Slot />;
+  const session = true;
+  return !session ? <Redirect href="/" /> : <Stack screenOptions={{ headerShown: true }} />;
 }
 
 const styles = StyleSheet.create({});
