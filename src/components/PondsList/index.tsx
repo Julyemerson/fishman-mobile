@@ -5,15 +5,15 @@ import Pond from '../Pond';
 import IPond from '@/types/pond';
 
 interface PondListProps {
-  Ponds: IPond[];
+  ponds: IPond[];
 }
 
-export default function PondsList({ Ponds }: PondListProps) {
+export default function PondsList({ ponds }: PondListProps) {
   return (
     <View style={style.container}>
       <FlatList
         contentContainerStyle={style.listContent}
-        data={Ponds}
+        data={ponds}
         renderItem={({ item }) => <Pond name={item.name} key={item.id} />}
         ItemSeparatorComponent={() => <View style={style.separator} />}
       />

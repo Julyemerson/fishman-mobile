@@ -12,9 +12,10 @@ interface AuthState {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
+  farmId: number | null;
   setToken: (token: string | null) => void;
   setUser: (user: User | null) => void;
-  login: (token: string, user: User) => void;
+  login: (token: string, farmId: number) => void;
   logout: () => void;
 }
 
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       isAuthenticated: false,
+      farmId: null,
 
       setToken: (token) => {
         set({ token, isAuthenticated: !!token });
@@ -33,8 +35,8 @@ export const useAuthStore = create<AuthState>()(
         set({ user });
       },
 
-      login: (token, user) => {
-        set({ token, user, isAuthenticated: true });
+      login: (token, farmId) => {
+        set({ token, farmId, isAuthenticated: true });
       },
 
       logout: () => {

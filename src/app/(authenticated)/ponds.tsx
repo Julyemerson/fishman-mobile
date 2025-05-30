@@ -1,27 +1,38 @@
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Container } from '@/components/Container';
 import PondsList from '@/components/PondsList';
-
-const data = [
-  {
-    id: 1,
-    name: 'Viveiro 1',
-    farmId: 1,
-  },
-  {
-    id: 2,
-    name: 'Viveiro 2',
-    farmId: 1,
-  },
-  {
-    id: 3,
-    name: 'Viveiro 3',
-    farmId: 1,
-  },
-];
+import SplashScreen from '@/components/SplashScreen';
+import api from '@/services/api';
+import { useAuthStore } from '@/store/auth.store';
+import IPond from '@/types/pond';
 
 export default function Ponds() {
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<IPond[]>();
+
+  const { farmId } = useAuthStore();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get(`/ponds/farm/${farmId}`);
+        setData(data);
+      } catch (error: any) {
+        console.error('Não foi possivel fazer a requisição dos viveiros', error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <SplashScreen />;
+  }
+
   return (
     <Container>
       <View style={styles.container}>
@@ -30,7 +41,7 @@ export default function Ponds() {
           <Text style={styles.headerSecondaryText}>Clique para selecionar o Viveiro</Text>
         </View>
 
-        <PondsList Ponds={data} />
+        <PondsList ponds={data ?? []} />
 
         <View style={styles.listContainer}>
           <View>

@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/auth.store';
 export default function ProtectedLayout() {
   const { isAuthenticated } = useAuthStore();
   const farm = 'DR PESCADOS';
-
+  //TODO Pegar nome da fazenda dinamicamente.
   if (!isAuthenticated) {
     return <Redirect href="/" />;
   }
