@@ -1,14 +1,22 @@
-import { StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
 import Pond from '../Pond';
 
-export default function PondsList() {
+import IPond from '@/types/pond';
+
+interface PondListProps {
+  Ponds: IPond[];
+}
+
+export default function PondsList({ Ponds }: PondListProps) {
   return (
     <View style={style.container}>
-      <Pond name="viveiro 1" />
-      <Pond name="viveiro 2" />
-      <Pond name="viveiro 3" />
-      <Pond name="viveiro 4" />
+      <FlatList
+        contentContainerStyle={style.listContent}
+        data={Ponds}
+        renderItem={({ item }) => <Pond name={item.name} key={item.id} />}
+        ItemSeparatorComponent={() => <View style={style.separator} />}
+      />
     </View>
   );
 }
@@ -16,9 +24,15 @@ export default function PondsList() {
 const style = StyleSheet.create({
   container: {
     flex: 1,
-    width: '100%',
-    gap: 20,
     justifyContent: 'center',
     alignContent: 'center',
+    paddingVertical: 10,
+    width: '100%',
+  },
+  listContent: {
+    paddingVertical: 30,
+  },
+  separator: {
+    height: 20,
   },
 });

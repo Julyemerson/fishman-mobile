@@ -1,4 +1,4 @@
-interface Feeder {
+interface IFeeder {
   id: string;
   name: string;
   isActive: number;
