@@ -41,7 +41,11 @@ export default function Ponds() {
           <Text style={styles.headerSecondaryText}>Clique para selecionar o Viveiro</Text>
         </View>
 
-        <PondsList ponds={data ?? []} />
+        {data && data?.length > 0 ? (
+          <PondsList ponds={data ?? []} />
+        ) : (
+          <Text style={styles.supportText}>Nenhum Viveiro Encontrado</Text>
+        )}
 
         <View style={styles.listContainer}>
           <View>
