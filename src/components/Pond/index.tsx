@@ -1,12 +1,14 @@
 import { StyleSheet, TouchableOpacity, Text } from 'react-native';
 
-type PondProps = {
+interface PondProps {
+  id: number;
   name: string;
-};
+  onPress: (pondId: number) => void;
+}
 
-export default function Pond({ name }: PondProps) {
+export default function Pond({ id, name, onPress }: PondProps) {
   return (
-    <TouchableOpacity style={styles.button}>
+    <TouchableOpacity style={styles.button} onPress={() => onPress(id)}>
       <Text style={styles.PondsName}>{name}</Text>
     </TouchableOpacity>
   );

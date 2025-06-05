@@ -6,15 +6,18 @@ import IPond from '@/types/pond';
 
 interface PondListProps {
   ponds: IPond[];
+  onPress: (pondId: number) => void;
 }
 
-export default function PondsList({ ponds }: PondListProps) {
+export default function PondsList({ ponds, onPress }: PondListProps) {
   return (
     <View style={style.container}>
       <FlatList
         contentContainerStyle={style.listContent}
         data={ponds}
-        renderItem={({ item }) => <Pond name={item.name} key={item.id} />}
+        renderItem={({ item }) => (
+          <Pond onPress={onPress} id={item.id} name={item.name} key={item.id} />
+        )}
         ItemSeparatorComponent={() => <View style={style.separator} />}
       />
     </View>

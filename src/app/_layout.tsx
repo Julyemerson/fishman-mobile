@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SplashScreen from '@/components/SplashScreen';
 import { useAuthStore } from '@/store/auth.store';
@@ -26,8 +27,10 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name={isAuthenticated ? '(authenticated)' : '(auth)'} />
-    </Stack>
+    <SafeAreaProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name={isAuthenticated ? '(authenticated)' : '(auth)'} />
+      </Stack>
+    </SafeAreaProvider>
   );
 }

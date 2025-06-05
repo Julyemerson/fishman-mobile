@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -12,6 +13,7 @@ export default function Ponds() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<IPond[]>();
 
+  const router = useRouter();
   const { farmId } = useAuthStore();
 
   useEffect(() => {
@@ -26,8 +28,14 @@ export default function Ponds() {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []);
+    if (farmId) {
+      fetchData();
+    }
+  }, [farmId]);
+
+  function handlePondPress(pondId: number) {
+    router.push({ pathname: '/feeder', params: { pondId } });
+  }
 
   if (loading) {
     return <SplashScreen />;
@@ -42,7 +50,7 @@ export default function Ponds() {
         </View>
 
         {data && data?.length > 0 ? (
-          <PondsList ponds={data ?? []} />
+          <PondsList ponds={data ?? []} onPress={handlePondPress} />
         ) : (
           <Text style={styles.supportText}>Nenhum Viveiro Encontrado</Text>
         )}

@@ -1,20 +1,25 @@
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 
 export default function Feeder() {
+  const { pondId } = useLocalSearchParams();
   const router = useRouter();
+
+  function handlePressBackButton() {
+    router.back();
+  }
 
   return (
     <>
       <Container>
-        <Stack.Screen options={{ title: 'Feeder', headerShown: false }} />
         <View style={styles.container}>
-          <Text>feeder</Text>
+          <Text>feeder {pondId}</Text>
         </View>
         <Button title="Feeder" onPress={() => router.navigate('/')} />
+        <Button title="Voltar" onPress={handlePressBackButton} />
       </Container>
     </>
   );
