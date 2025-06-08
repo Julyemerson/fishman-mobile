@@ -1,6 +1,7 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import DistributionTime from '../DistributionTime';
 import LedIndicator from '../LedIndicator';
 
 import formatTime from '@/utils/formatTime';
@@ -36,12 +37,10 @@ export default function Feeder() {
           <Ionicons name="scale-outline" size={20} color="#585858" />
           <Text style={styles.iconText}>40kg</Text>
         </View>
-        <View style={styles.iconContainer}>
-          <Ionicons name="time-outline" size={20} color="#585858" />
-          <Text style={styles.iconText}>
-            {formatTime('1970-01-01T15:12:00.000Z')} - {formatTime('1970-01-01T16:18:00.000Z')}
-          </Text>
-        </View>
+        <DistributionTime
+          initialTime="1970-01-01T15:12:00.000Z"
+          finalTime="1970-01-01T16:18:00.000Z"
+        />
       </View>
     </TouchableOpacity>
   );
