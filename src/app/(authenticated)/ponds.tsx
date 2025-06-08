@@ -1,3 +1,4 @@
+import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -12,7 +13,6 @@ import IPond from '@/types/pond';
 export default function Ponds() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<IPond[]>();
-
   const router = useRouter();
   const { farmId } = useAuthStore();
 
@@ -34,7 +34,7 @@ export default function Ponds() {
   }, [farmId]);
 
   function handlePondPress(pondId: number) {
-    router.push({ pathname: '/feeder', params: { pondId } });
+    router.push({ pathname: '/feeders', params: { pondId } });
   }
 
   if (loading) {
@@ -61,6 +61,7 @@ export default function Ponds() {
             <Text style={styles.supportText}>Fale com o nosso suporte</Text>
           </View>
           <TouchableOpacity style={styles.supportButton}>
+            <FontAwesome name="whatsapp" size={28} color="#fff" />
             <Text style={styles.supportButtonText}>Suporte</Text>
           </TouchableOpacity>
         </View>
@@ -85,11 +86,13 @@ const styles = StyleSheet.create({
   },
   supportButton: {
     width: '100%',
-    padding: 4,
     height: 48,
     borderRadius: 10,
     backgroundColor: '#40A014',
+    flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
   },
   supportButtonText: {
     fontWeight: 'bold',
