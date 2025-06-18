@@ -13,6 +13,7 @@ import IPond from '@/types/pond';
 export default function Ponds() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<IPond[]>();
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { farmId } = useAuthStore();
 
@@ -23,6 +24,7 @@ export default function Ponds() {
         const { data } = await api.get(`/ponds/farm/${farmId}`);
         setData(data);
       } catch (error: any) {
+        setError(error.message || 'Não foi possível carregar os viveiros');
         console.error('Não foi possivel fazer a requisição dos viveiros', error.message);
       } finally {
         setLoading(false);

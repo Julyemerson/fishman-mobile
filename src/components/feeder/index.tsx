@@ -4,45 +4,33 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DistributionTime from '../DistributionTime';
 import LedIndicator from '../LedIndicator';
 
-import formatTime from '@/utils/formatTime';
+import { IFeeder } from '@/types/feeder';
 
-//  {
-//         "id": "cmbd5lcvz0001wsi76n5w71qx",
-//         "name": "Alimentador 2",
-//         "isActive": 1,
-//         "description": "Alimentador 2 do Tanque 1",
-//         "url": "https://cecil.com",
-//         "port": 8082,
-//         "pondId": 1,
-//         "startFeedTime": "1970-01-01T15:12:00.000Z",
-//         "stopFeedTime": "1970-01-01T16:18:00.000Z",
-//         "initialDistributedWeight": 30,
-//         "feedInterval": 30,
-//     },
+interface FeederProps {
+  feeder: IFeeder;
+  onPress: (feederId: string) => void;
+}
 
-export default function Feeder() {
+export default function Feeder({ feeder, onPress }: FeederProps) {
   return (
-    <TouchableOpacity style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.headerText}>
-        <Text>Alimentador 1</Text>
-        <View style={styles.iconContainer}>
+        <Text>{feeder.name}</Text>
+        <TouchableOpacity style={styles.iconContainer} onPress={() => onPress(feeder.id)}>
           <Feather name="edit" size={15} color="#585858" />
           <Text style={styles.iconText}>Editar</Text>
-        </View>
+        </TouchableOpacity>
       </View>
       <View style={styles.separator} />
       <View style={styles.detailsContainer}>
-        <LedIndicator isActive={2} />
+        <LedIndicator isActive={feeder.isActive} />
         <View style={styles.iconContainer}>
           <Ionicons name="scale-outline" size={20} color="#585858" />
-          <Text style={styles.iconText}>40kg</Text>
+          <Text style={styles.iconText}>{feeder.initialDistributedWeight}kg</Text>
         </View>
-        <DistributionTime
-          initialTime="1970-01-01T15:12:00.000Z"
-          finalTime="1970-01-01T16:18:00.000Z"
-        />
+        <DistributionTime initialTime={feeder.startFeedTime} finalTime={feeder.stopFeedTime} />
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 

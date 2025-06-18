@@ -1,4 +1,4 @@
-interface IFeeder {
+export interface IFeeder {
   id: string;
   name: string;
   isActive: number;
@@ -9,6 +9,7 @@ interface IFeeder {
   startFeedTime: string;
   stopFeedTime: string;
   feedInterval: number;
+  initialDistributedWeight: number;
   createdAt: string;
   updatedAt: string;
 }
