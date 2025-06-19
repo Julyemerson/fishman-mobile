@@ -15,16 +15,16 @@
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/native": "^7.0.3",
     "axios": "^1.9.0",
-    "expo": "^53.0.11",
+    "expo": "^53.0.12",
     "expo-constants": "~17.1.6",
     "expo-linking": "~7.1.5",
-    "expo-router": "~5.0.7",
+    "expo-router": "~5.1.0",
     "expo-status-bar": "~2.2.3",
-    "expo-system-ui": "~5.0.8",
-    "expo-web-browser": "~14.1.6",
+    "expo-system-ui": "~5.0.9",
+    "expo-web-browser": "~14.2.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-native": "0.79.3",
+    "react-native": "0.79.4",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-reanimated": "3.17.5",
     "react-native-safe-area-context": "5.4.0",
@@ -47,5 +47,5 @@
     "root": true
   },
   "private": true,
-  "packageManager": "pnpm@10.9.0+sha512.0486e394640d3c1fb3c9d43d49cf92879ff74f8516959c235308f5a8f62e2e19528a65cdc2a3058f587cde71eba3d5b56327c8c33a97e4c4051ca48a10ca2d5f"
+  "packageManager": "pnpm@10.12.1"
 }

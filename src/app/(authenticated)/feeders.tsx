@@ -52,9 +52,7 @@ export default function Feeders() {
   }
 
   function handleFeederPress(feederId: string) {
-    //router.push({ pathname: '/feeder-details', params: { feederId } });A
-    console.log(`Feeder with ID ${feederId} pressed`);
-    // TODO: Implement navigation to feeder details
+    router.push({ pathname: '/feederDetail', params: { feederId } });
   }
 
   return (
