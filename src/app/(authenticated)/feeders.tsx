@@ -6,48 +6,30 @@ import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 import FeedersList from '@/components/FeedersList';
 import SplashScreen from '@/components/SplashScreen';
-import api from '@/services/api';
+import { useFeederStore } from '@/store/feeder.store';
 import { IFeeder } from '@/types/feeder';
 
 export default function Feeders() {
-  const [loading, setLoading] = useState(false);
-  const [feeders, setFeeders] = useState<IFeeder[]>();
-  const [error, setError] = useState<string | null>(null);
   const { pondId } = useLocalSearchParams();
   const router = useRouter();
+  const [feeders, setFeeders] = useState<IFeeder[]>();
+  const { error, fetchFeeder, isLoading } = useFeederStore();
 
   useEffect(() => {
     const fetchFeeders = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await api.get(`/feeders/pond/${pondId}`);
-        if (!response.data) {
-          throw new Error('Failed to fetch feeders');
-        }
-        const data: IFeeder[] = response.data;
-        setFeeders(data);
-      } catch (err: any) {
-        setError(err.message || 'An error occurred while fetching feeders');
-      } finally {
-        setLoading(false);
-      }
+      const feeders = await fetchFeeder(Number(pondId));
+      setFeeders(feeders);
     };
     if (pondId) {
       fetchFeeders();
     }
-    return () => {
-      // Cleanup function to reset state or cancel requests if necessary
-      setFeeders([]);
-      setError(null);
-    };
   }, []);
 
   function handlePressBackButton() {
     router.back();
   }
 
-  if (loading) {
+  if (isLoading) {
     return <SplashScreen />;
   }
 
@@ -97,6 +79,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonBack: {
-    marginBottom: 25,
+    marginBottom: 40,
   },
 });

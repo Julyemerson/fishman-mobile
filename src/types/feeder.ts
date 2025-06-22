@@ -10,6 +10,4 @@ export interface IFeeder {
   stopFeedTime: string;
   feedInterval: number;
   initialDistributedWeight: number;
-  createdAt: string;
-  updatedAt: string;
 }

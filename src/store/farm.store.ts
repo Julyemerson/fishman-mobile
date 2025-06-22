@@ -23,7 +23,7 @@ export const useFarmStore = create<FarmStore>((set, get) => ({
     userId: 0,
     zipCode: '',
   },
-  isLoading: true,
+  isLoading: false,
   error: null,
 
   fetchFarm: async (farmId: number) => {
