@@ -1,3 +1,4 @@
+import { getLocales } from 'expo-localization';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -6,6 +7,7 @@ import SplashScreen from '@/components/SplashScreen';
 import { useAuthStore } from '@/store/auth.store';
 
 export default function RootLayout() {
+  const deviceLanguage = getLocales()[0].languageCode;
   const [hasHydrated, setHasHydrated] = useState(false);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   useEffect(() => {

@@ -29,7 +29,7 @@ export default function ProtectedLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: true }}>
-      <Stack.Screen name="ponds" options={{ title: farm?.name }} />
+      <Stack.Screen name="ponds" options={{ title: farm?.name, headerBackVisible: false }} />
       <Stack.Screen name="feeders" options={{ title: farm?.name, headerBackVisible: false }} />
       <Stack.Screen name="feederDetail" options={{ title: farm?.name, headerBackVisible: false }} />
     </Stack>

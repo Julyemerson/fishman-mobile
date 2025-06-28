@@ -1,19 +1,27 @@
-import { useLocalSearchParams } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Switch, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Switch, TextInput, TouchableOpacity } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 import SplashScreen from '@/components/SplashScreen';
+import { useFarmStore } from '@/store/farm.store';
 import { useFeederStore } from '@/store/feeder.store';
 import { IFeeder } from '@/types/feeder';
 import formatTime from '@/utils/formatTime';
 
 export default function FeederDetail() {
+  const [time, setTime] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedFeeder, setSelectedFeeder] = useState<IFeeder>();
+
   const { feederId } = useLocalSearchParams();
   const { feeder, isLoading } = useFeederStore();
+  const { farm } = useFarmStore();
 
-  const [selectedFeeder, setSelectedFeeder] = useState<IFeeder>();
+  const router = useRouter();
 
   useEffect(() => {
     const selectedFeeder = feeder.find((item) => {
@@ -28,10 +36,27 @@ export default function FeederDetail() {
     return <SplashScreen />;
   }
 
+  function onchange(event: DateTimePickerEvent, selectedTime: Date | undefined) {
+    const currentTime = selectedTime || time;
+    setShowTimePicker(false);
+    setTime(currentTime);
+    console.log('Selected time:', currentTime);
+  }
+
   return (
     <Container>
+      <Stack.Screen
+        options={{
+          headerTitle: '',
+          headerLeft: () => (
+            <MaterialIcons name="home" size={28} onPress={() => router.navigate('/')} />
+          ),
+          headerRight: () => <MaterialIcons name="settings" size={28} />,
+        }}
+      />
       <View style={styles.container}>
         <View>
+          <Text style={styles.headerText}>{farm.name}</Text>
           <View style={styles.switchContainer}>
             <Text style={styles.switchHeaderText}>{selectedFeeder?.name}</Text>
             <Switch />
@@ -52,12 +77,25 @@ export default function FeederDetail() {
             Configure o horário inicial e final de funcionamento do raçoador
           </Text>
           <View style={styles.timeBoxContainer}>
-            <View style={styles.timeBox}>
+            <TouchableOpacity style={styles.timeBox} onPress={() => setShowTimePicker(true)}>
+              {showTimePicker && (
+                <DateTimePicker
+                  value={time}
+                  mode="time"
+                  timeZoneName="America/Sao_Paulo"
+                  is24Hour
+                  display="default"
+                  locale="pt-BR"
+                  timeZoneOffsetInMinutes={-180}
+                  minimumDate={new Date()}
+                  onChange={onchange}
+                />
+              )}
               <Text style={styles.timeBoxTextHeader}>Horário Inicial</Text>
               <Text style={styles.timeBoxText}>
                 {selectedFeeder?.startFeedTime ? formatTime(selectedFeeder.startFeedTime) : '--:--'}
               </Text>
-            </View>
+            </TouchableOpacity>
             <View style={styles.timeBox}>
               <Text style={styles.timeBoxTextHeader}>Horário Final</Text>
               <Text style={styles.timeBoxText}>
@@ -69,20 +107,24 @@ export default function FeederDetail() {
       </View>
       <View style={styles.containerButton}>
         <Button style={styles.btnSave} title="Salvar" />
-        <Button title="Voltar" />
+        <Button title="Voltar" onPress={() => router.back()} />
       </View>
     </Container>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
-    justifyContent: 'center',
     alignContent: 'center',
     alignItems: 'center',
     gap: 15,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 900,
+    marginTop: 10,
+    marginBottom: 10,
   },
   switchContainer: {
     flexDirection: 'row',
