@@ -39,18 +39,17 @@ export default function App() {
       const { access_token, farmId } = response.data;
       login(access_token, farmId);
     } catch (error: any) {
-      console.error('Error:', error.response?.data || error.message);
-      Alert.alert(error.response?.data || 'Falha no Login: verifique email e senha');
+      Alert.alert('Falha no Login: verifique email e senha');
     }
   }
 
   return (
     <>
       <Stack.Screen options={{ title: 'Home', headerShown: false }} />
-      <Container>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.keyboardAvoidingView}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}>
+        <Container>
           <ScrollView contentContainerStyle={styles.scrollView} keyboardShouldPersistTaps="handled">
             <View style={styles.container}>
               <View style={styles.header}>
@@ -92,8 +91,8 @@ export default function App() {
               </TouchableOpacity>
             </View>
           </ScrollView>
-        </KeyboardAvoidingView>
-      </Container>
+        </Container>
+      </KeyboardAvoidingView>
     </>
   );
 }

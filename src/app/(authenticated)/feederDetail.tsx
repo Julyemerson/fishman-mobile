@@ -40,7 +40,10 @@ export default function FeederDetail() {
     const currentTime = selectedTime || time;
     setShowTimePicker(false);
     setTime(currentTime);
-    console.log('Selected time:', currentTime);
+    console.log(
+      'Hora Formatada:',
+      currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    );
   }
 
   return (
@@ -69,6 +72,7 @@ export default function FeederDetail() {
           <TextInput
             style={styles.inputInitialWeightText}
             defaultValue={selectedFeeder?.initialDistributedWeight.toString()}
+            keyboardType="number-pad"
           />
           <Text style={styles.inputInitialWeightText}>kg</Text>
         </View>
