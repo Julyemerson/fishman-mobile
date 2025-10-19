@@ -19,8 +19,8 @@ export default function Input({ iconName, error, isPassword = false, ...rest }: 
           style={styles.textInput}
           placeholderTextColor="#777"
           key={hidePassword ? 'password' : 'text'}
-          secureTextEntry={isPassword && hidePassword}
           {...rest}
+          secureTextEntry={isPassword && hidePassword}
         />
         {isPassword && (
           <TouchableOpacity onPress={() => setHidePassword((prev) => !prev)}>

@@ -45,10 +45,10 @@ export default function App() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Home', headerShown: false }} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}>
+        <Stack.Screen options={{ title: 'Home', headerShown: false }} />
         <Container>
           <ScrollView contentContainerStyle={styles.scrollView} keyboardShouldPersistTaps="handled">
             <View style={styles.container}>
