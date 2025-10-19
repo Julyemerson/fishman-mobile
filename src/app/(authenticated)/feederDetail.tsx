@@ -9,6 +9,7 @@ import { Container } from '@/components/Container';
 import SplashScreen from '@/components/SplashScreen';
 import { useFarmStore } from '@/store/farm.store';
 import { useFeederStore } from '@/store/feeder.store';
+import { useModalStore } from '@/store/modal.store';
 import { IFeeder } from '@/types/feeder';
 import formatTime from '@/utils/formatTime';
 
@@ -20,6 +21,7 @@ export default function FeederDetail() {
   const { feederId } = useLocalSearchParams();
   const { feeder, isLoading } = useFeederStore();
   const { farm } = useFarmStore();
+  const { openConfigModal } = useModalStore();
 
   const router = useRouter();
 
@@ -52,9 +54,9 @@ export default function FeederDetail() {
         options={{
           headerTitle: '',
           headerLeft: () => (
-            <MaterialIcons name="home" size={28} onPress={() => router.navigate('/')} />
+            <MaterialIcons name="home" size={28} onPress={() => router.replace('/')} />
           ),
-          headerRight: () => <MaterialIcons name="settings" size={28} />,
+          headerRight: () => <MaterialIcons name="settings" size={28} onPress={openConfigModal} />,
         }}
       />
       <View style={styles.container}>
