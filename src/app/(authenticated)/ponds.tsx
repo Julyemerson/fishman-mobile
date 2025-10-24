@@ -1,7 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Linking, Alert } from 'react-native';
 
 import { Container } from '@/components/Container';
 import PondsList from '@/components/PondsList';
@@ -16,6 +16,23 @@ export default function Ponds() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { farmId } = useAuthStore();
+
+  const phoneNumber = process.env.EXPO_PUBLIC_SUPPORT_PHONE_NUMBER || '';
+  const messageText = 'Olá, estou com um problema no aplicativo Fishman. Poderiam me ajudar?';
+
+  function handleSupportPress() {
+    const url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(messageText)}`;
+
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (!supported) {
+          Alert.alert('Erro', 'O WhatsApp não está instalado no dispositivo.');
+        } else {
+          return Linking.openURL(url);
+        }
+      })
+      .catch((err) => console.error('Erro ao tentar abrir o WhatsApp:', err));
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,7 +79,7 @@ export default function Ponds() {
             <Text style={styles.supportText}>Está com algum problema?</Text>
             <Text style={styles.supportText}>Fale com o nosso suporte</Text>
           </View>
-          <TouchableOpacity style={styles.supportButton}>
+          <TouchableOpacity style={styles.supportButton} onPress={handleSupportPress}>
             <FontAwesome name="whatsapp" size={28} color="#fff" />
             <Text style={styles.supportButtonText}>Suporte</Text>
           </TouchableOpacity>

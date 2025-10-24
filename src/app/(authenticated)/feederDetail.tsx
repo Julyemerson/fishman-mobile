@@ -79,15 +79,6 @@ export default function FeederDetail() {
 
   return (
     <Container>
-      <Stack.Screen
-        options={{
-          headerTitle: '',
-          headerLeft: () => (
-            <MaterialIcons name="home" size={28} onPress={() => router.replace('/')} />
-          ),
-          headerRight: () => <MaterialIcons name="settings" size={28} onPress={openConfigModal} />,
-        }}
-      />
       <View style={styles.container}>
         <View>
           <Text style={styles.headerText}>{farm.name}</Text>
