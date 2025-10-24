@@ -1,12 +1,12 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Switch, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Switch, TextInput, Alert } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 import SplashScreen from '@/components/SplashScreen';
+import api from '@/services/api';
 import { useFarmStore } from '@/store/farm.store';
 import { useFeederStore } from '@/store/feeder.store';
 import { useModalStore } from '@/store/modal.store';
@@ -15,6 +15,7 @@ import formatTime from '@/utils/formatTime';
 
 export default function FeederDetail() {
   const [time, setTime] = useState(new Date());
+  const [isActiveFeeder, setIsActiveFeeder] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedFeeder, setSelectedFeeder] = useState<IFeeder>();
 
@@ -26,27 +27,55 @@ export default function FeederDetail() {
   const router = useRouter();
 
   useEffect(() => {
-    const selectedFeeder = feeder.find((item) => {
-      return item.id === feederId;
-    });
-    if (selectedFeeder) {
-      setSelectedFeeder(selectedFeeder);
+    if (feeder && feeder.length > 0 && feederId) {
+      const foundFeeder = feeder.find((item) => {
+        return item.id === feederId;
+      });
+
+      if (foundFeeder) {
+        setSelectedFeeder(foundFeeder);
+        setIsActiveFeeder(foundFeeder.isActive === 2);
+      }
     }
-  }, []);
+  }, [feeder, feederId]);
+
+  function handleToggleFeederActive(newValue: boolean) {
+    if (newValue === true) {
+      setIsActiveFeeder(true);
+    } else {
+      Alert.alert('Desativar Alimentador', 'Tem certeza que deseja desativar este alimentador?', [
+        { text: 'Cancelar', onPress: () => {}, style: 'cancel' },
+        { text: 'Desativar', onPress: () => setIsActiveFeeder(false), style: 'destructive' },
+      ]);
+    }
+  }
+
+  async function handleSaveFeederDetails() {
+    // Lógica para salvar os detalhes do alimentador
+    const isFeederActiveApi = isActiveFeeder ? 2 : 1;
+
+    await api.patch(`/feeders/${feederId}`, {
+      isActive: isFeederActiveApi,
+      // Outros dados a serem atualizados
+    });
+    Alert.alert('Sucesso', 'Detalhes do alimentador salvos com sucesso!', [
+      { text: 'OK', onPress: () => router.replace('/') },
+    ]);
+  }
 
   if (isLoading) {
     return <SplashScreen />;
   }
 
-  function onchange(event: DateTimePickerEvent, selectedTime: Date | undefined) {
-    const currentTime = selectedTime || time;
-    setShowTimePicker(false);
-    setTime(currentTime);
-    console.log(
-      'Hora Formatada:',
-      currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    );
-  }
+  // function onchange(event: DateTimePickerEvent, selectedTime: Date | undefined) {
+  //   const currentTime = selectedTime || time;
+  //   setShowTimePicker(false);
+  //   setTime(currentTime);
+  //   console.log(
+  //     'Hora Formatada:',
+  //     currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  //   );
+  // }
 
   return (
     <Container>
@@ -64,7 +93,13 @@ export default function FeederDetail() {
           <Text style={styles.headerText}>{farm.name}</Text>
           <View style={styles.switchContainer}>
             <Text style={styles.switchHeaderText}>{selectedFeeder?.name}</Text>
-            <Switch />
+            <Switch
+              value={isActiveFeeder}
+              onValueChange={handleToggleFeederActive}
+              trackColor={{ false: '#767577', true: '#007458' }}
+              thumbColor={isActiveFeeder ? '#6ec531' : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+            />
           </View>
           <Text style={styles.switchText}>
             Insira a quantidade de ração que será distribuída ao longo do dia
@@ -83,8 +118,8 @@ export default function FeederDetail() {
             Configure o horário inicial e final de funcionamento do raçoador
           </Text>
           <View style={styles.timeBoxContainer}>
-            <TouchableOpacity style={styles.timeBox} onPress={() => setShowTimePicker(true)}>
-              {showTimePicker && (
+            <View style={styles.timeBox}>
+              {/* {showTimePicker && (
                 <DateTimePicker
                   value={time}
                   mode="time"
@@ -96,12 +131,12 @@ export default function FeederDetail() {
                   minimumDate={new Date()}
                   onChange={onchange}
                 />
-              )}
+              )} */}
               <Text style={styles.timeBoxTextHeader}>Horário Inicial</Text>
               <Text style={styles.timeBoxText}>
                 {selectedFeeder?.startFeedTime ? formatTime(selectedFeeder.startFeedTime) : '--:--'}
               </Text>
-            </TouchableOpacity>
+            </View>
             <View style={styles.timeBox}>
               <Text style={styles.timeBoxTextHeader}>Horário Final</Text>
               <Text style={styles.timeBoxText}>
@@ -112,7 +147,7 @@ export default function FeederDetail() {
         </View>
       </View>
       <View style={styles.containerButton}>
-        <Button style={styles.btnSave} title="Salvar" />
+        <Button style={styles.btnSave} title="Salvar" onPress={handleSaveFeederDetails} />
         <Button title="Voltar" onPress={() => router.back()} />
       </View>
     </Container>

@@ -23,7 +23,7 @@ export default function Feeders() {
     if (pondId) {
       fetchFeeders();
     }
-  }, []);
+  }, [pondId]);
 
   function handlePressBackButton() {
     router.back();
