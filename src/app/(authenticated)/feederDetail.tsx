@@ -9,20 +9,16 @@ import SplashScreen from '@/components/SplashScreen';
 import api from '@/services/api';
 import { useFarmStore } from '@/store/farm.store';
 import { useFeederStore } from '@/store/feeder.store';
-import { useModalStore } from '@/store/modal.store';
 import { IFeeder } from '@/types/feeder';
 import formatTime from '@/utils/formatTime';
 
 export default function FeederDetail() {
-  const [time, setTime] = useState(new Date());
   const [isActiveFeeder, setIsActiveFeeder] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedFeeder, setSelectedFeeder] = useState<IFeeder>();
 
   const { feederId } = useLocalSearchParams();
   const { feeder, isLoading } = useFeederStore();
   const { farm } = useFarmStore();
-  const { openConfigModal } = useModalStore();
 
   const router = useRouter();
 
@@ -67,15 +63,6 @@ export default function FeederDetail() {
     return <SplashScreen />;
   }
 
-  // function onchange(event: DateTimePickerEvent, selectedTime: Date | undefined) {
-  //   const currentTime = selectedTime || time;
-  //   setShowTimePicker(false);
-  //   setTime(currentTime);
-  //   console.log(
-  //     'Hora Formatada:',
-  //     currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  //   );
-  // }
 
   return (
     <Container>
@@ -110,19 +97,6 @@ export default function FeederDetail() {
           </Text>
           <View style={styles.timeBoxContainer}>
             <View style={styles.timeBox}>
-              {/* {showTimePicker && (
-                <DateTimePicker
-                  value={time}
-                  mode="time"
-                  timeZoneName="America/Sao_Paulo"
-                  is24Hour
-                  display="default"
-                  locale="pt-BR"
-                  timeZoneOffsetInMinutes={-180}
-                  minimumDate={new Date()}
-                  onChange={onchange}
-                />
-              )} */}
               <Text style={styles.timeBoxTextHeader}>Horário Inicial</Text>
               <Text style={styles.timeBoxText}>
                 {selectedFeeder?.startFeedTime ? formatTime(selectedFeeder.startFeedTime) : '--:--'}

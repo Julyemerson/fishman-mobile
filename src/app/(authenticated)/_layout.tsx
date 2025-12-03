@@ -4,14 +4,12 @@ import { useEffect, useState } from 'react';
 
 import { useAuthStore } from '@/store/auth.store';
 import { useFarmStore } from '@/store/farm.store';
-import { useModalStore } from '@/store/modal.store';
 import { IFarm } from '@/types/farm';
 
 export default function ProtectedLayout() {
   const [farm, setFarm] = useState<IFarm>();
   const { isAuthenticated, farmId } = useAuthStore();
   const { fetchFarm } = useFarmStore();
-  const { openConfigModal } = useModalStore();
   const { logout } = useAuthStore();
 
   const router = useRouter();
@@ -51,7 +49,6 @@ export default function ProtectedLayout() {
           headerBackVisible: false,
           headerTitle: '',
           headerLeft: () => <AntDesign name="home" size={28} onPress={() => router.replace('/')} />,
-          headerRight: () => <MaterialIcons name="settings" size={28} onPress={openConfigModal} />,
         }}
       />
     </Stack>
