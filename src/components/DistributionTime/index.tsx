@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet } from 'react-native';
 
-import formatTime from '@/utils/formatTime';
+import { formatMinutes, isoToMinutes } from '@/utils/feedTime';
 
 interface DistributionTimeProps {
-  initialTime: string;
-  finalTime: string;
+  initialTime: string | null;
+  finalTime: string | null;
 }
 
 export default function DistributionTime({ initialTime, finalTime }: DistributionTimeProps) {
@@ -13,7 +13,7 @@ export default function DistributionTime({ initialTime, finalTime }: Distributio
     <View style={styles.iconContainer}>
       <Ionicons name="time-outline" size={20} color="#585858" />
       <Text style={styles.iconText}>
-        {formatTime(initialTime)} - {formatTime(finalTime)}
+        {formatMinutes(isoToMinutes(initialTime))} - {formatMinutes(isoToMinutes(finalTime))}
       </Text>
     </View>
   );

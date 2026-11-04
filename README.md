@@ -29,8 +29,8 @@ Feito com **Expo + React Native + TypeScript**, roda em Android, iOS e (experime
 | --- | --- | --- |
 | Login | `/(auth)` | Autenticação por email e senha. O token JWT e a fazenda do usuário ficam salvos no aparelho, mantendo a sessão entre aberturas do app. |
 | Viveiros | `/(authenticated)/ponds` | Lista os viveiros da fazenda. Botão de **suporte via WhatsApp** e botão de logout no cabeçalho. |
-| Alimentadores | `/(authenticated)/feeders` | Lista os alimentadores do viveiro selecionado, com indicador de status (ativo/inativo) e quantidade de ração. |
-| Detalhe do alimentador | `/(authenticated)/feederDetail` | Liga/desliga o alimentador (com confirmação ao desativar), edita a quantidade de ração diária (kg) e exibe os horários inicial e final de funcionamento. |
+| Alimentadores | `/(authenticated)/feeders` | Lista os alimentadores do viveiro selecionado, com status (ativo/inativo), conexão (online/offline), quantidade de ração e horários. |
+| Detalhe do alimentador | `/(authenticated)/feederDetail` | Liga/desliga o alimentador (com confirmação ao desativar); edita a ração diária (kg), os horários inicial e final e o intervalo entre doses, mostrando quantas doses serão feitas; mostra a conexão do equipamento, um aviso se ele não estiver calibrado e as alimentações de hoje com o status de cada dose. |
 
 ## Stack
 
@@ -133,7 +133,8 @@ src/
 │       ├── ponds.tsx             # Viveiros
 │       ├── feeders.tsx           # Alimentadores do viveiro
 │       └── feederDetail.tsx      # Detalhe/edição do alimentador
-├── components/                   # Componentes reutilizáveis (Button, Input, Feeder, Pond, LedIndicator…)
+├── components/                   # Componentes reutilizáveis (Button, Input, Feeder, Pond, LedIndicator,
+│                                 #   ConnectionStatus, FeedingLogList…)
 ├── services/
 │   └── api.ts                    # Instância do Axios + interceptor do token
 ├── store/                        # Stores Zustand
@@ -142,7 +143,8 @@ src/
 │   └── feeder.store.ts           # Alimentadores do viveiro atual
 ├── types/                        # Interfaces das entidades (IFarm, IFeeder, IPond) e constantes
 ├── utils/
-│   └── formatTime.ts             # Formata datas ISO em HH:mm (UTC)
+│   ├── feedTime.ts               # Horários de alimentação (API ⇄ seletor ⇄ HH:mm) e validação das doses
+│   └── relativeTime.ts           # "há 5 min" e hora local de instantes reais
 └── assets/                       # Ícones, splash e logo
 ```
 
@@ -172,6 +174,7 @@ Abrir app ──► _layout (aguarda reidratação do AsyncStorage)
 - O store usa o middleware `persist` do Zustand com **AsyncStorage**; são persistidos `token`, `user` e `farmId`. Ao reidratar, `isAuthenticated` é recalculado a partir do token.
 - O layout raiz exibe a splash até a reidratação terminar, evitando que a tela de login "pisque" para usuários já logados.
 - O interceptor em `src/services/api.ts` adiciona `Authorization: Bearer <token>` a todas as requisições.
+- O token expira em **7 dias**. Quando a API responde 401/403, o interceptor de resposta encerra a sessão e o usuário volta ao login.
 - O logout (ícone no cabeçalho de Viveiros) limpa toda a sessão.
 
 ### Estado
@@ -194,21 +197,26 @@ Todas as rotas (exceto login) exigem o header `Authorization: Bearer <token>`. T
 | `GET` | `/farms/:farmId` | Dados da fazenda | `IFarm` |
 | `GET` | `/ponds/farm/:farmId` | Viveiros da fazenda | `IPond[]` |
 | `GET` | `/feeders/pond/:pondId` | Alimentadores do viveiro | `IFeeder[]` |
-| `PATCH` | `/feeders/:feederId` | Atualiza alimentador | Envia `{ isActive, initialDistributedWeight }` |
+| `GET` | `/feeders/logs/:feederId` | Alimentações de hoje (dia no fuso da fazenda) | `IFeedingLog[]`, mais recentes primeiro |
+| `PATCH` | `/feeders/:feederId` | Atualiza alimentador | Envia `{ isActive, initialDistributedWeight, feedInterval, startFeedTime, stopFeedTime }` (campos vazios são omitidos) |
 
 ### Modelos
+
+Definidos em `src/types/` e espelhando o `prisma/schema.prisma` do backend. Campos opcionais no banco chegam como `null`.
 
 ```ts
 interface IFarm {
   id: number;
   name: string;
   ownerName: string;
-  street: string;
-  number: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-  zipCode: string;
+  street: string | null;
+  number: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
   userId: number;
 }
 
@@ -221,19 +229,38 @@ interface IPond {
 interface IFeeder {
   id: string;
   name: string;
-  isActive: number;                 // 1 = inativo, 2 = ativo (use FEEDER_STATUS)
-  description: string;
-  url: string;
-  port: number;
+  isActive: boolean;
+  description: string | null;
+  isOnline: boolean;                       // conectividade do ESP32 (MQTT LWT)
+  lastSeenAt: string | null;               // última vez que ficou online/offline
+  url: string | null;
+  port: number | null;
   pondId: number;
-  startFeedTime: string;            // data ISO; exibida em HH:mm (UTC)
-  stopFeedTime: string;             // data ISO; exibida em HH:mm (UTC)
-  feedInterval: number;
-  initialDistributedWeight: number; // kg por dia
+  engineModelId: number | null;
+  startFeedTime: string | null;            // coluna TIME, ver nota abaixo
+  stopFeedTime: string | null;
+  feedInterval: number | null;             // minutos entre doses
+  initialDistributedWeight: number | null; // meta diária em kg
+  kilogramsPerSecond: number | null;       // calibração; sem ela o backend não alimenta
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface IFeedingLog {
+  id: string;
+  feederId: string;
+  doseKg: number;
+  durationSeconds: number;
+  message: string | null;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'CONFIRMED' | 'CANCELLED';
+  triggeredAt: string;
+  executedAt: string | null;
 }
 ```
 
-> O status do alimentador usa os valores numéricos da API. Use sempre as constantes `FEEDER_STATUS.ACTIVE` / `FEEDER_STATUS.INACTIVE` de `src/types/feeder.ts` em vez de `1`/`2` soltos.
+> **Horários de alimentação:** a API guarda `startFeedTime`/`stopFeedTime` em colunas `TIME` do Postgres (sem fuso) e as devolve como data ISO em 1970-01-01 UTC — `"1970-01-01T08:00:00.000Z"` significa **08:00 no horário da fazenda**. Leia e escreva sempre os campos UTC (veja `src/utils/feedTime.ts`); usar o horário local do aparelho desloca o valor em 3 horas.
+
+> **Validação das doses:** o cron do backend divide a janela (final − inicial) pelo `feedInterval` para obter o número de doses e recusa configurações em que o intervalo é maior que a janela ou em que uma dose demoraria mais que o intervalo para sair. `validateFeedSchedule` (em `feedTime.ts`) replica essas regras para avisar o usuário antes de salvar — se mudar a regra no backend, mude lá também.
 
 ## Build e publicação (EAS)
 

@@ -1,6 +1,7 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import ConnectionStatus from '../ConnectionStatus';
 import DistributionTime from '../DistributionTime';
 import LedIndicator from '../LedIndicator';
 
@@ -15,7 +16,10 @@ export default function Feeder({ feeder, onPress }: FeederProps) {
   return (
     <View style={styles.container}>
       <View style={styles.headerText}>
-        <Text>{feeder.name}</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleText}>{feeder.name}</Text>
+          <ConnectionStatus isOnline={feeder.isOnline} lastSeenAt={feeder.lastSeenAt} compact />
+        </View>
         <TouchableOpacity style={styles.iconContainer} onPress={() => onPress(feeder.id)}>
           <Feather name="edit" size={15} color="#585858" />
           <Text style={styles.iconText}>Editar</Text>
@@ -26,7 +30,7 @@ export default function Feeder({ feeder, onPress }: FeederProps) {
         <LedIndicator isActive={feeder.isActive} />
         <View style={styles.iconContainer}>
           <Ionicons name="scale-outline" size={20} color="#585858" />
-          <Text style={styles.iconText}>{feeder.initialDistributedWeight}kg</Text>
+          <Text style={styles.iconText}>{feeder.initialDistributedWeight ?? '--'} kg</Text>
         </View>
         <DistributionTime initialTime={feeder.startFeedTime} finalTime={feeder.stopFeedTime} />
       </View>
@@ -37,7 +41,7 @@ export default function Feeder({ feeder, onPress }: FeederProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#d9d9d9',
-    height: 88,
+    minHeight: 88,
     width: '100%',
     borderRadius: 10,
     justifyContent: 'space-evenly',
@@ -47,6 +51,14 @@ const styles = StyleSheet.create({
   headerText: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titleContainer: {
+    flexShrink: 1,
+    gap: 2,
+  },
+  titleText: {
+    fontWeight: '600',
   },
   iconContainer: {
     flexDirection: 'row',

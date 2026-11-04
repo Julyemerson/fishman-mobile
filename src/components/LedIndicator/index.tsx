@@ -1,16 +1,14 @@
 import { Fontisto } from '@expo/vector-icons';
 import { View, Text, StyleSheet } from 'react-native';
 
-import { FEEDER_STATUS } from '@/types/feeder';
-
 interface LedIndicatorProps {
-  isActive: number;
+  isActive: boolean;
 }
 
 export default function LedIndicator({ isActive }: LedIndicatorProps) {
   return (
     <>
-      {isActive === FEEDER_STATUS.ACTIVE ? (
+      {isActive ? (
         <View style={styles.ledContainer}>
           <Fontisto name="record" size={18} color="#40A014" />
           <Text>ATIVO</Text>

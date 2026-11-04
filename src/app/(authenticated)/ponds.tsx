@@ -50,6 +50,8 @@ export default function Ponds() {
     };
     if (farmId) {
       fetchData();
+    } else {
+      setError('Nenhuma fazenda vinculada à sua conta. Fale com o suporte.');
     }
   }, [farmId]);
 
