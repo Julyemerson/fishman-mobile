@@ -17,4 +17,5 @@ export type { PillVariant } from './StatusPill';
 export { Stepper } from './Stepper';
 export { SuccessView } from './SuccessView';
 export { TextField } from './TextField';
+export type { TextFieldHandle } from './TextField';
 export { TimeStepper } from './TimeStepper';

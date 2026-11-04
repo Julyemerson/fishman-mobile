@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { ComponentRef, forwardRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, TextInputProps, View } from 'react-native';
 
 import { AppText } from './AppText';
@@ -16,7 +16,10 @@ interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   invalid?: boolean;
 }
 
-export const TextField = forwardRef<TextInput, TextFieldProps>(
+/** Instância do TextInput (o tipo mudou no React Native 0.88; use este alias). */
+export type TextFieldHandle = ComponentRef<typeof TextInput>;
+
+export const TextField = forwardRef<TextFieldHandle, TextFieldProps>(
   ({ label, password = false, invalid = false, onFocus, onBlur, ...rest }, ref) => {
     const [focused, setFocused] = useState(false);
     const [hidden, setHidden] = useState(true);

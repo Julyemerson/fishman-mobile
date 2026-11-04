@@ -37,9 +37,7 @@
     "orientation": "portrait",
     "icon": "./src/assets/icons/adaptive-icon.png",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.drpescados.app"

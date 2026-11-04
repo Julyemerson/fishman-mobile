@@ -1,18 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isAxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AppText, Banner, BigButton, SpeakButton, TextField } from '@/components/ui';
+import {
+  AppText,
+  Banner,
+  BigButton,
+  SpeakButton,
+  TextField,
+  TextFieldHandle,
+} from '@/components/ui';
 import api from '@/services/api';
 import { useAuthStore } from '@/store/auth.store';
 import { colors, spacing } from '@/theme';
@@ -39,7 +38,7 @@ function loginErrorMessage(error: unknown): string {
 
 export default function Login() {
   const login = useAuthStore((s) => s.login);
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextFieldHandle>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
