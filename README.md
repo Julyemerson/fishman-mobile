@@ -25,12 +25,21 @@ Feito com **Expo + React Native + TypeScript**, roda em Android, iOS e (experime
 
 ## Funcionalidades
 
+O app é feito para produtores com pouca instrução formal: botões grandes, ícone + palavra curta em todo estado, nada de teclado na configuração e uma pergunta por tela. Mockups: <https://claude.ai/artifact/E1yqW5Sn2Viz8dMGz1coc4>.
+
 | Tela | Rota | Descrição |
 | --- | --- | --- |
-| Login | `/(auth)` | Autenticação por email e senha. O token JWT e a fazenda do usuário ficam salvos no aparelho, mantendo a sessão entre aberturas do app. |
-| Viveiros | `/(authenticated)/ponds` | Lista os viveiros da fazenda. Botão de **suporte via WhatsApp** e botão de logout no cabeçalho. |
-| Alimentadores | `/(authenticated)/feeders` | Lista os alimentadores do viveiro selecionado, com status (ativo/inativo), conexão (online/offline), quantidade de ração e horários. |
-| Detalhe do alimentador | `/(authenticated)/feederDetail` | Liga/desliga o alimentador (com confirmação ao desativar); edita a ração diária (kg), os horários inicial e final e o intervalo entre doses, mostrando quantas doses serão feitas; mostra a conexão do equipamento, um aviso se ele não estiver calibrado e as alimentações de hoje com o status de cada dose. |
+| Login | `/(auth)` | Email e senha. Token e fazenda ficam salvos no aparelho, mantendo a sessão. |
+| Início | `/(authenticated)/inicio` | Resumo "hoje na fazenda" e todos os alimentadores agrupados por viveiro (ligado/desligado, sinal, kg de hoje, horário, "precisa de atenção"). Ajuda pelo WhatsApp e "Sair da conta" (com confirmação). |
+| Alimentador | `/(authenticated)/feederDetail` | Botão enorme LIGADO/DESLIGADO, sinal do equipamento, avisos (sem sinal, falta calibrar, falta configurar), card HOJE com kg do dia, próxima ração e doses de hoje. |
+| Mudar configuração | `/(authenticated)/configurar` | Passo a passo sem teclado: ração por dia → que horas começa → que horas termina → intervalo → resumo "Está certo?" → "Salvo!". Bloqueia combinações que o cron do backend recusaria. |
+| Vitrine (dev) | `/componentes` | Todos os componentes base. Só em desenvolvimento, pelo botão "Ver componentes" na Início. |
+
+**Em todas as telas autenticadas:**
+
+- 🔊 **Ouvir** — lê o estado da tela em voz alta (`expo-speech`, pt-BR).
+- **Vibração** ao ligar, desligar, salvar e em erro (`expo-haptics`).
+- **Atualização automática** a cada 30 s com a tela aberta e o app em primeiro plano (`useAutoRefresh`), e puxar para atualizar.
 
 ## Stack
 
@@ -123,29 +132,41 @@ npx tsc --noEmit
 ```
 src/
 ├── app/                          # Rotas (expo-router: cada arquivo é uma tela)
-│   ├── _layout.tsx               # Layout raiz: aguarda reidratação do store e escolhe o grupo de rotas
-│   ├── index.tsx                 # Redireciona para login ou viveiros conforme a sessão
-│   ├── (auth)/                   # Rotas públicas
-│   │   ├── _layout.tsx
-│   │   └── index.tsx             # Tela de login
-│   └── (authenticated)/          # Rotas protegidas
-│       ├── _layout.tsx           # Guarda de autenticação, cabeçalho e carga da fazenda
-│       ├── ponds.tsx             # Viveiros
-│       ├── feeders.tsx           # Alimentadores do viveiro
-│       └── feederDetail.tsx      # Detalhe/edição do alimentador
-├── components/                   # Componentes reutilizáveis (Button, Input, Feeder, Pond, LedIndicator,
-│                                 #   ConnectionStatus, FeedingLogList…)
-├── services/
-│   └── api.ts                    # Instância do Axios + interceptor do token
-├── store/                        # Stores Zustand
+│   ├── _layout.tsx               # Raiz: carrega a fonte Nunito e reidrata a sessão
+│   ├── index.tsx                 # Redireciona para login ou Início conforme a sessão
+│   ├── componentes.tsx           # Vitrine de componentes (só em __DEV__)
+│   ├── (auth)/index.tsx          # Login
+│   └── (authenticated)/
+│       ├── _layout.tsx           # Guarda de autenticação e carga da fazenda
+│       ├── inicio.tsx            # Início: resumo + alimentadores por viveiro
+│       ├── feederDetail.tsx      # Alimentador: liga/desliga, hoje, doses
+│       └── configurar.tsx        # Passo a passo de configuração
+├── theme/index.ts                # Tokens: cores "Água", fonte, tamanhos, toque mínimo
+├── components/
+│   ├── ui/                       # Componentes base (AppText, BigButton, Card, StatusPill,
+│   │                             #   Stepper, TimeStepper, ChoiceChips, ProgressRing/Bar,
+│   │                             #   Banner, EmptyState, SuccessView, Skeleton, Screen,
+│   │                             #   AppHeader, SpeakButton)
+│   ├── FeederCard/               # Card da Início
+│   ├── PowerToggle/              # Botão LIGADO/DESLIGADO
+│   └── DoseList/                 # Doses de hoje
+├── hooks/
+│   ├── useAutoRefresh.ts         # Atualização a cada 30 s (tela aberta + app ativo)
+│   └── useSpeech.ts              # Fala em pt-BR, para ao sair da tela
+├── services/api.ts               # Axios + token + logout em 401/403
+├── store/
 │   ├── auth.store.ts             # Sessão (token, usuário, farmId) — persistido
 │   ├── farm.store.ts             # Dados da fazenda
-│   └── feeder.store.ts           # Alimentadores do viveiro atual
-├── types/                        # Interfaces das entidades (IFarm, IFeeder, IPond) e constantes
-├── utils/
-│   ├── feedTime.ts               # Horários de alimentação (API ⇄ seletor ⇄ HH:mm) e validação das doses
-│   └── relativeTime.ts           # "há 5 min" e hora local de instantes reais
-└── assets/                       # Ícones, splash e logo
+│   └── feeder.store.ts           # Fazenda inteira: viveiros, alimentadores e doses de hoje
+├── types/                        # IFarm, IFeeder, IFeedingLog, IPond
+└── utils/
+    ├── feedTime.ts               # Horários (colunas TIME) e validação das doses
+    ├── feeding.ts                # kg de hoje, próxima ração, doses restantes, atenção
+    ├── speech.ts                 # Frases faladas (fazenda e alimentador)
+    ├── haptics.ts                # Vibrações nomeadas (ligar, desligar, sucesso…)
+    ├── support.ts                # Abre o WhatsApp do suporte
+    ├── format.ts                 # kg com vírgula
+    └── relativeTime.ts           # "há 2 horas" e hora local
 ```
 
 O alias `@/` aponta para `src/` (configurado em `tsconfig.json`), ex.: `import api from '@/services/api'`.
@@ -155,18 +176,28 @@ O alias `@/` aponta para `src/` (configurado em `tsconfig.json`), ex.: `import a
 ### Fluxo de navegação
 
 ```
-Abrir app ──► _layout (aguarda reidratação do AsyncStorage)
+Abrir app ──► _layout (fonte + reidratação do AsyncStorage)
                  │
                  ├─ sem token ──► (auth)/index ── login OK ──┐
                  │                                           │
-                 └─ com token ──► (authenticated)/ponds ◄────┘
-                                        │
-                                        ▼
-                                  feeders?pondId=…
+                 └─ com token ──► (authenticated)/inicio ◄───┘
                                         │
                                         ▼
                                 feederDetail?feederId=…
+                                        │  "Mudar configuração"
+                                        ▼
+                                configurar?feederId=…  (4 passos → resumo → Salvo!)
 ```
+
+Cada tela desenha o próprio cabeçalho (`AppHeader`) com "‹ Voltar"/"‹ Início" escrito. No passo a passo, o "voltar" do Android volta um passo; sair com alterações pede confirmação.
+
+### Design
+
+- Tokens em `src/theme/index.ts`; nunca use cores soltas nas telas.
+- Paleta "Água", tirada da logo: azul-petróleo `#1F5F6B` nas ações e no "ligado", coral `#E8714A` só em barras/anéis, texto marrom `#2B1E16`, amarelo para atenção e vermelho para erro. Todo texto passa contraste 4,5:1.
+- Toque mínimo de 56 px (ação principal 64 px), texto mínimo de 15 px, zoom de fonte do sistema limitado a 1,5×.
+- Estado sempre com ícone + palavra (`StatusPill`), nunca só cor.
+- Componentes têm `accessibilityLabel`/`Role`; `Stepper` e `TimeStepper` funcionam com os gestos do TalkBack.
 
 ### Autenticação e sessão
 
@@ -175,7 +206,7 @@ Abrir app ──► _layout (aguarda reidratação do AsyncStorage)
 - O layout raiz exibe a splash até a reidratação terminar, evitando que a tela de login "pisque" para usuários já logados.
 - O interceptor em `src/services/api.ts` adiciona `Authorization: Bearer <token>` a todas as requisições.
 - O token expira em **7 dias**. Quando a API responde 401/403, o interceptor de resposta encerra a sessão e o usuário volta ao login.
-- O logout (ícone no cabeçalho de Viveiros) limpa toda a sessão.
+- "Sair da conta" (fim da tela Início, com confirmação) limpa toda a sessão.
 
 ### Estado
 
@@ -183,9 +214,8 @@ Abrir app ──► _layout (aguarda reidratação do AsyncStorage)
 | --- | --- | --- |
 | `useAuthStore` | Token, usuário, fazenda do usuário, `login`/`logout` | Sim |
 | `useFarmStore` | Dados da fazenda (nome usado nos cabeçalhos) | Não |
-| `useFeederStore` | Lista de alimentadores do viveiro atual, loading e erro | Não |
+| `useFeederStore` | Fazenda inteira: viveiros, alimentadores e doses de hoje; carga silenciosa para a atualização automática; erro classificado (sem internet, servidor, sem fazenda) | Não |
 
-A tela de viveiros mantém seus dados em estado local do componente.
 
 ## Integração com a API
 

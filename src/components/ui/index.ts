@@ -16,3 +16,4 @@ export { StatusPill } from './StatusPill';
 export type { PillVariant } from './StatusPill';
 export { Stepper } from './Stepper';
 export { SuccessView } from './SuccessView';
+export { TimeStepper } from './TimeStepper';

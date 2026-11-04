@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from './AppText';
 import { BigButton } from './BigButton';
-import { Icon } from './Icon';
+import { Icon, IconName } from './Icon';
 
 import { colors, spacing } from '@/theme';
 import { haptics } from '@/utils/haptics';
@@ -13,7 +13,7 @@ interface SuccessViewProps {
   message: string;
   /** Resumo do que foi salvo. */
   children?: ReactNode;
-  action: { label: string; onPress: () => void };
+  action: { label: string; onPress: () => void; icon?: IconName };
 }
 
 /** Confirmação de sucesso: fundo neutro, ✓ grande e vibração ao aparecer. */
@@ -38,7 +38,7 @@ export function SuccessView({ title = 'Salvo!', message, children, action }: Suc
         </AppText>
         {children}
       </View>
-      <BigButton title={action.label} icon="home" onPress={action.onPress} large />
+      <BigButton title={action.label} icon={action.icon ?? 'home'} onPress={action.onPress} large />
     </View>
   );
 }
