@@ -14,7 +14,21 @@
       "expo-web-browser",
       "expo-localization",
       "expo-font",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./src/assets/icons/splash_icon_android_light.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "image": "./src/assets/icons/splash_icon_android_dark.png",
+            "backgroundColor": "#000000"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -23,15 +37,6 @@
     "orientation": "portrait",
     "icon": "./src/assets/icons/adaptive-icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./src/assets/icons/splash_icon_android_light.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
-      "dark": {
-        "image": "./src/assets/icons/splash_icon_android_dark.png",
-        "backgroundColor": "#000000"
-      }
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
