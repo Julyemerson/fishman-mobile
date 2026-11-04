@@ -6,6 +6,7 @@ import { StyleSheet, Text, TouchableOpacity, View, Linking, Alert } from 'react-
 import { Container } from '@/components/Container';
 import PondsList from '@/components/PondsList';
 import SplashScreen from '@/components/SplashScreen';
+import { BigButton } from '@/components/ui';
 import api from '@/services/api';
 import { useAuthStore } from '@/store/auth.store';
 import IPond from '@/types/pond';
@@ -77,6 +78,16 @@ export default function Ponds() {
           <PondsList ponds={data} onPress={handlePondPress} />
         ) : (
           <Text style={styles.supportText}>Nenhum Viveiro Encontrado</Text>
+        )}
+
+        {__DEV__ && (
+          <BigButton
+            title="Ver componentes"
+            icon="palette-outline"
+            variant="secondary"
+            onPress={() => router.push('/componentes')}
+            accessibilityHint="Só aparece em modo de desenvolvimento"
+          />
         )}
 
         <View style={styles.listContainer}>

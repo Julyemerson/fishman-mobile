@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { FeedingStatus, IFeedingLog } from '@/types/feeder';
+import { sumDeliveredKg } from '@/utils/feeding';
 import { formatClockTime } from '@/utils/relativeTime';
 
 const STATUS_LABEL: Record<FeedingStatus, { text: string; color: string; background: string }> = {
@@ -20,9 +21,7 @@ export default function FeedingLogList({ logs }: FeedingLogListProps) {
     return <Text style={styles.empty}>Nenhuma alimentação registrada hoje.</Text>;
   }
 
-  const delivered = logs
-    .filter((log) => log.status === 'CONFIRMED' || log.status === 'SUCCESS')
-    .reduce((total, log) => total + log.doseKg, 0);
+  const delivered = sumDeliveredKg(logs);
 
   return (
     <View style={styles.container}>
