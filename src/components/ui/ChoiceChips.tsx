@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from './AppText';
+import { Tap } from './Tap';
 
 import { colors, radius, spacing, touch } from '@/theme';
 import { haptics } from '@/utils/haptics';
@@ -36,7 +37,7 @@ export function ChoiceChips<T extends string | number>({
         const selected = option.value === value;
         const fg = selected ? colors.onPrimary : colors.text;
         return (
-          <Pressable
+          <Tap
             key={String(option.value)}
             onPress={() => {
               haptics.select();
@@ -66,7 +67,7 @@ export function ChoiceChips<T extends string | number>({
                 {option.sublabel}
               </AppText>
             )}
-          </Pressable>
+          </Tap>
         );
       })}
     </View>

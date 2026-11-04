@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from './AppText';
 import { Icon } from './Icon';
+import { Tap } from './Tap';
 
 import { colors, radius, spacing } from '@/theme';
 import { haptics } from '@/utils/haptics';
@@ -108,13 +109,13 @@ function Arrow({
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
       style={({ pressed }) => [styles.arrow, pressed && styles.arrowPressed]}>
       <Icon name={icon} size={38} color={colors.primary} />
-    </Pressable>
+    </Tap>
   );
 }
 

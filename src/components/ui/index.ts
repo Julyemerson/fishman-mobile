@@ -19,3 +19,4 @@ export { SuccessView } from './SuccessView';
 export { TextField } from './TextField';
 export type { TextFieldHandle } from './TextField';
 export { TimeStepper } from './TimeStepper';
+export { Tap } from './Tap';

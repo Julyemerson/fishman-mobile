@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from './AppText';
 import { Icon } from './Icon';
+import { Tap } from './Tap';
 
 import { colors, spacing } from '@/theme';
 import { haptics } from '@/utils/haptics';
@@ -50,7 +51,7 @@ export function Stepper({
         if (e.nativeEvent.actionName === 'increment' && canInc) change(value + step);
         if (e.nativeEvent.actionName === 'decrement' && canDec) change(value - step);
       }}>
-      <Pressable
+      <Tap
         onPress={() => change(value - step)}
         disabled={!canDec}
         accessibilityLabel={`Menos ${stepLabel}`}
@@ -62,7 +63,7 @@ export function Stepper({
           !canDec && styles.disabled,
         ]}>
         <Icon name="minus" size={38} color={colors.primary} />
-      </Pressable>
+      </Tap>
 
       <View style={styles.valueBox}>
         <AppText variant="display" align="center" style={styles.tabular}>
@@ -73,7 +74,7 @@ export function Stepper({
         </AppText>
       </View>
 
-      <Pressable
+      <Tap
         onPress={() => change(value + step)}
         disabled={!canInc}
         accessibilityLabel={`Mais ${stepLabel}`}
@@ -85,7 +86,7 @@ export function Stepper({
           !canInc && styles.disabled,
         ]}>
         <Icon name="plus" size={38} color={colors.onPrimary} />
-      </Pressable>
+      </Tap>
     </View>
   );
 }

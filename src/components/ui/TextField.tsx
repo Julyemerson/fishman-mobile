@@ -1,8 +1,9 @@
 import { ComponentRef, forwardRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, TextInputProps, View } from 'react-native';
+import { StyleSheet, TextInput, TextInputProps, View } from 'react-native';
 
 import { AppText } from './AppText';
 import { Icon } from './Icon';
+import { Tap } from './Tap';
 
 import { MAX_FONT_SCALE, colors, fonts, radius, spacing, touch } from '@/theme';
 import { haptics } from '@/utils/haptics';
@@ -50,7 +51,7 @@ export const TextField = forwardRef<TextFieldHandle, TextFieldProps>(
             {...rest}
           />
           {password && (
-            <Pressable
+            <Tap
               onPress={() => {
                 haptics.tap();
                 setHidden(!hidden);
@@ -66,7 +67,7 @@ export const TextField = forwardRef<TextFieldHandle, TextFieldProps>(
               <AppText variant="label" color={colors.textSecondary}>
                 {hidden ? 'Ver' : 'Esconder'}
               </AppText>
-            </Pressable>
+            </Tap>
           )}
         </View>
       </View>

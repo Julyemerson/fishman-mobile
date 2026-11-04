@@ -1,7 +1,8 @@
-import { ActivityIndicator, Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { AppText } from './AppText';
 import { Icon, IconName } from './Icon';
+import { Tap } from './Tap';
 
 import { colors, radius, spacing, touch } from '@/theme';
 import { haptics } from '@/utils/haptics';
@@ -66,7 +67,7 @@ export function BigButton({
   );
 
   return (
-    <Pressable
+    <Tap
       onPress={handlePress}
       disabled={isDisabled}
       accessibilityRole="button"
@@ -89,7 +90,7 @@ export function BigButton({
           {title}
         </AppText>
       </View>
-    </Pressable>
+    </Tap>
   );
 }
 

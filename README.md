@@ -330,6 +330,7 @@ O número de versão do app é gerenciado remotamente pelo EAS (`appVersionSourc
 - **ESLint** com `eslint-config-universe/native` e **Prettier** (`prettier.config.js`). Rode `pnpm lint` antes de abrir PR.
 - Imports ordenados: bibliotecas externas primeiro, depois imports com `@/`, separados por linha em branco (o ESLint aponta).
 - Um componente por pasta em `src/components/<Nome>/index.tsx`.
+- Elementos tocáveis usam `Tap` (`src/components/ui/Tap.tsx`), nunca `Pressable` direto: ele trata o toque longo como toque normal. Sem isso, no celular, quem segura o dedo um pouco mais precisa tocar 2 ou 3 vezes.
 - Chamadas de API sempre com `try/catch` e feedback ao usuário (`Alert` ou mensagem na tela).
 - Textos da interface em português.
 

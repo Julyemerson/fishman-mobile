@@ -1,8 +1,9 @@
 import { ReactNode } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { AppText } from './AppText';
 import { Icon } from './Icon';
+import { Tap } from './Tap';
 
 import { colors, radius, spacing, touch } from '@/theme';
 import { haptics } from '@/utils/haptics';
@@ -23,7 +24,7 @@ export function AppHeader({ title, back, showLogo, right }: AppHeaderProps) {
     <View style={styles.header}>
       <View style={styles.side}>
         {back && (
-          <Pressable
+          <Tap
             onPress={() => {
               haptics.tap();
               back.onPress();
@@ -36,7 +37,7 @@ export function AppHeader({ title, back, showLogo, right }: AppHeaderProps) {
             <AppText variant="body" color={colors.primary} style={styles.backText}>
               {back.label ?? 'Voltar'}
             </AppText>
-          </Pressable>
+          </Tap>
         )}
         {showLogo && <Image source={logo} style={styles.logo} accessibilityIgnoresInvertColors />}
       </View>
@@ -67,7 +68,7 @@ export function HeaderButton({
   active?: boolean;
 }) {
   return (
-    <Pressable
+    <Tap
       onPress={() => {
         haptics.tap();
         onPress();
@@ -83,7 +84,7 @@ export function HeaderButton({
       <AppText variant="label" color={active ? colors.onPrimary : colors.textSecondary}>
         {label}
       </AppText>
-    </Pressable>
+    </Tap>
   );
 }
 

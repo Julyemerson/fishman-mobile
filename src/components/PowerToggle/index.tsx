@@ -1,6 +1,7 @@
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppText, Icon } from '@/components/ui';
+import { Tap } from '@/components/ui/Tap';
 import { colors, radius, spacing } from '@/theme';
 
 interface PowerToggleProps {
@@ -12,7 +13,7 @@ interface PowerToggleProps {
 /** Botão enorme de ligar/desligar: o estado mais importante da tela. */
 export function PowerToggle({ isOn, busy, onPress }: PowerToggleProps) {
   return (
-    <Pressable
+    <Tap
       onPress={onPress}
       disabled={busy}
       accessibilityRole="switch"
@@ -42,7 +43,7 @@ export function PowerToggle({ isOn, busy, onPress }: PowerToggleProps) {
           {busy ? 'Aguarde…' : isOn ? 'Toque para desligar' : 'Toque para ligar'}
         </AppText>
       </View>
-    </Pressable>
+    </Tap>
   );
 }
 

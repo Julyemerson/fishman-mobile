@@ -1,5 +1,7 @@
 import { ReactNode } from 'react';
-import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+
+import { Tap } from './Tap';
 
 import { colors, radius, spacing } from '@/theme';
 import { haptics } from '@/utils/haptics';
@@ -25,7 +27,7 @@ export function Card({
   }
 
   return (
-    <Pressable
+    <Tap
       onPress={() => {
         haptics.tap();
         onPress();
@@ -35,7 +37,7 @@ export function Card({
       accessibilityHint={accessibilityHint}
       style={({ pressed }) => [styles.card, pressed && styles.pressed, style]}>
       {children}
-    </Pressable>
+    </Tap>
   );
 }
 
