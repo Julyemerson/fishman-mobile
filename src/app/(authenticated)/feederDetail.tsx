@@ -141,7 +141,7 @@ export default function FeederDetail() {
     if (feeder!.isActive) {
       Alert.alert(
         'Desligar o alimentador?',
-        'Os peixes deste viveiro não vão receber ração até você ligar de novo.',
+        'Os camarões deste viveiro não vão receber ração até você ligar de novo.',
         [
           { text: 'Cancelar', style: 'cancel' },
           { text: 'Desligar', style: 'destructive', onPress: () => setActive(false) },

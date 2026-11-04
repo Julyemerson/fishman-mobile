@@ -158,7 +158,7 @@ export default function Configurar() {
   });
   const plan = 'plan' in check ? check.plan : null;
   const planText = plan
-    ? `Os peixes vão comer ${plan.numberOfDoses} ${plan.numberOfDoses === 1 ? 'vez' : 'vezes'} por dia${
+    ? `Os camarões vão comer ${plan.numberOfDoses} ${plan.numberOfDoses === 1 ? 'vez' : 'vezes'} por dia${
         plan.doseKg !== null ? `, ${formatKg(plan.doseKg)} kg cada vez` : ''
       }.`
     : '';
@@ -330,7 +330,7 @@ export default function Configurar() {
             <Banner variant="error" title="Não vai dar certo assim" message={stepError} />
           ) : (
             <View style={styles.planBox} accessibilityLiveRegion="polite">
-              <Icon name="fish" size={30} color={colors.primary} />
+              <Icon name="shrimp" size={30} color={colors.primary} />
               <AppText variant="body" style={styles.flex}>
                 {planText}
               </AppText>
@@ -373,7 +373,7 @@ export default function Configurar() {
             onChange={() => setStep(3)}
           />
           <View style={styles.planBox}>
-            <Icon name="fish" size={30} color={colors.primary} />
+            <Icon name="shrimp" size={30} color={colors.primary} />
             <AppText variant="body" style={styles.flex}>
               {planText}
             </AppText>

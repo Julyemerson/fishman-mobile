@@ -81,7 +81,7 @@ export interface FarmSpeechInput {
   goalKg: number;
 }
 
-/** "Fazenda Teste. 2 de 3 alimentadores estão ligados. Hoje os peixes já comeram 31 de 60 quilos. Atenção: Alimentador 2 está sem sinal." */
+/** "Fazenda Teste. 2 de 3 alimentadores estão ligados. Hoje os camarões já comeram 31 de 60 quilos. Atenção: Alimentador 2 está sem sinal." */
 export function buildFarmSpeech({
   farmName,
   feeders,
@@ -106,8 +106,8 @@ export function buildFarmSpeech({
   if (goalKg > 0) {
     parts.push(
       deliveredKg > 0
-        ? `Hoje os peixes já comeram ${formatKgSpoken(deliveredKg).replace(/ quilos?$/, '')} de ${formatKgSpoken(goalKg)}.`
-        : 'Hoje os peixes ainda não comeram.'
+        ? `Hoje os camarões já comeram ${formatKgSpoken(deliveredKg).replace(/ quilos?$/, '')} de ${formatKgSpoken(goalKg)}.`
+        : 'Hoje os camarões ainda não comeram.'
     );
   }
 

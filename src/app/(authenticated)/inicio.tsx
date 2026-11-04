@@ -144,7 +144,7 @@ export default function Inicio() {
       ) : feeders.length === 0 ? (
         <View style={styles.emptyBox}>
           <EmptyState
-            icon="fish"
+            icon="shrimp"
             title="Nenhum alimentador"
             message="Ainda não há alimentadores cadastrados na sua fazenda. Fale com o suporte."
           />
