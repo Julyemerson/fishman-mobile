@@ -1,56 +1,29 @@
-import { MaterialIcons, AntDesign } from '@expo/vector-icons';
-import { Redirect, Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { Redirect, Stack } from 'expo-router';
+import { useEffect } from 'react';
 
 import { useAuthStore } from '@/store/auth.store';
 import { useFarmStore } from '@/store/farm.store';
-import { IFarm } from '@/types/farm';
+import { colors } from '@/theme';
 
 export default function ProtectedLayout() {
-  const [farm, setFarm] = useState<IFarm>();
   const { isAuthenticated, farmId } = useAuthStore();
-  const { fetchFarm } = useFarmStore();
-  const { logout } = useAuthStore();
-
-  const router = useRouter();
+  const fetchFarm = useFarmStore((s) => s.fetchFarm);
 
   useEffect(() => {
-    const fetchAndSetFarm = async () => {
-      if (farmId !== null) {
-        const farmData = await fetchFarm(farmId);
-
-        if (farmData) {
-          setFarm(farmData);
-        }
-      }
-    };
-    fetchAndSetFarm();
+    if (farmId !== null) fetchFarm(farmId);
   }, [fetchFarm, farmId]);
 
   if (!isAuthenticated) {
     return <Redirect href="/" />;
   }
 
+  // Cada tela desenha o próprio cabeçalho (AppHeader), com "Voltar" escrito.
   return (
-    <Stack screenOptions={{ headerShown: true }}>
-      <Stack.Screen
-        name="ponds"
-        options={{
-          title: farm?.name,
-          headerBackVisible: false,
-          headerRight: () => <AntDesign name="poweroff" size={28} onPress={logout} />,
-        }}
-      />
-      <Stack.Screen name="feeders" options={{ title: farm?.name, headerBackVisible: false }} />
-      <Stack.Screen
-        name="feederDetail"
-        options={{
-          title: farm?.name,
-          headerBackVisible: false,
-          headerTitle: '',
-          headerLeft: () => <AntDesign name="home" size={28} onPress={() => router.replace('/')} />,
-        }}
-      />
+    <Stack
+      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+      <Stack.Screen name="inicio" />
+      <Stack.Screen name="feederDetail" />
+      <Stack.Screen name="configurar" />
     </Stack>
   );
 }

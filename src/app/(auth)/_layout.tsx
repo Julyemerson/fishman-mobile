@@ -6,7 +6,7 @@ export default function AuthLayout() {
   const { isAuthenticated } = useAuthStore();
 
   if (isAuthenticated) {
-    return <Redirect href="/(authenticated)/ponds" />;
+    return <Redirect href="/(authenticated)/inicio" />;
   }
 
   return (

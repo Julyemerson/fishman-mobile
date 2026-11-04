@@ -30,4 +30,20 @@ api.interceptors.request.use(
   }
 );
 
+// Token vencido ou inválido: o AuthGuard do backend responde 403 (e 401 em alguns casos).
+// Encerra a sessão para o usuário voltar ao login em vez de ficar preso em telas de erro.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const isAuthRoute = String(error.config?.url ?? '').startsWith('/auth/');
+    const { token, logout } = useAuthStore.getState();
+
+    if ((status === 401 || status === 403) && !isAuthRoute && token) {
+      logout();
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
