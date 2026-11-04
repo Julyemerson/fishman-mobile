@@ -1,498 +1,371 @@
-import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker, {
-  DateTimePickerAndroid,
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Switch,
-  TextInput,
-  Alert,
-  Platform,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/Button';
-import ConnectionStatus from '@/components/ConnectionStatus';
-import FeedingLogList from '@/components/FeedingLogList';
-import SplashScreen from '@/components/SplashScreen';
-import { AppHeader, Screen } from '@/components/ui';
+import { DoseList } from '@/components/DoseList';
+import { PowerToggle } from '@/components/PowerToggle';
+import {
+  AppHeader,
+  AppText,
+  Banner,
+  BigButton,
+  Card,
+  EmptyState,
+  Icon,
+  IconName,
+  ProgressRing,
+  Screen,
+  Skeleton,
+  SpeakButton,
+} from '@/components/ui';
+import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import api from '@/services/api';
+import { useAuthStore } from '@/store/auth.store';
 import { useFeederStore } from '@/store/feeder.store';
-import { IFeeder, IFeedingLog } from '@/types/feeder';
-import {
-  MinutesOfDay,
-  formatMinutes,
-  isoToMinutes,
-  minutesToIso,
-  minutesToPickerDate,
-  pickerDateToMinutes,
-  validateFeedSchedule,
-} from '@/utils/feedTime';
+import { colors, radius, spacing } from '@/theme';
+import { IFeeder } from '@/types/feeder';
+import { formatMinutes, isoToMinutes, validateFeedSchedule } from '@/utils/feedTime';
+import { getFeederToday, getNextFeed, getRemainingDoses, needsCalibration } from '@/utils/feeding';
+import { formatKg } from '@/utils/format';
+import { haptics } from '@/utils/haptics';
+import { formatRelativeTime } from '@/utils/relativeTime';
+import { buildFeederSpeech } from '@/utils/speech';
+import { openWhatsAppSupport } from '@/utils/support';
 
-type TimeField = 'start' | 'stop';
-
-/** Converte texto digitado ("1,5", "2") em número; null se vazio ou inválido. */
-function parseDecimal(value: string): number | null {
-  const trimmed = value.trim().replace(',', '.');
-  if (trimmed === '') return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
+/** Tem o mínimo para o backend conseguir alimentar? */
+function isConfigured(feeder: IFeeder): boolean {
+  if (!feeder.initialDistributedWeight || feeder.initialDistributedWeight <= 0) return false;
+  const check = validateFeedSchedule({
+    startMinutes: isoToMinutes(feeder.startFeedTime),
+    stopMinutes: isoToMinutes(feeder.stopFeedTime),
+    feedIntervalMinutes: feeder.feedInterval,
+    dailyGoalKg: feeder.initialDistributedWeight,
+    kilogramsPerSecond: feeder.kilogramsPerSecond,
+  });
+  return !('error' in check);
 }
 
 export default function FeederDetail() {
-  const [selectedFeeder, setSelectedFeeder] = useState<IFeeder>();
-  const [isActiveFeeder, setIsActiveFeeder] = useState(false);
-  const [initialWeight, setInitialWeight] = useState('');
-  const [feedInterval, setFeedInterval] = useState('');
-  const [startMinutes, setStartMinutes] = useState<MinutesOfDay | null>(null);
-  const [stopMinutes, setStopMinutes] = useState<MinutesOfDay | null>(null);
-  const [iosPickerField, setIosPickerField] = useState<TimeField | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const [logs, setLogs] = useState<IFeedingLog[]>([]);
-  const [logsLoading, setLogsLoading] = useState(false);
-  const [logsError, setLogsError] = useState<string | null>(null);
-
-  const { feederId } = useLocalSearchParams<{ feederId: string }>();
-  const { feeders: feeder, isLoading, patchFeeder } = useFeederStore();
-
   const router = useRouter();
+  const { feederId } = useLocalSearchParams<{ feederId: string }>();
+  const farmId = useAuthStore((s) => s.farmId);
+  const { feeders, logsByFeeder, isLoading, isRefreshing, lastUpdated, loadFarm, patchFeeder } =
+    useFeederStore();
+  const [isToggling, setIsToggling] = useState(false);
 
+  const feeder = feeders.find((f) => f.id === feederId);
+  const logs = feeder ? logsByFeeder[feeder.id] : undefined;
+
+  const load = useCallback(
+    (options?: { silent?: boolean; pull?: boolean }) => loadFarm(farmId, options),
+    [loadFarm, farmId]
+  );
+
+  // Aberto direto (sem passar pela Início): carrega a fazenda.
   useEffect(() => {
-    if (feeder && feeder.length > 0 && feederId) {
-      const foundFeeder = feeder.find((item) => item.id === feederId);
+    if (lastUpdated === null) load();
+  }, [lastUpdated, load]);
 
-      if (foundFeeder) {
-        setSelectedFeeder(foundFeeder);
-        setIsActiveFeeder(foundFeeder.isActive);
-        setInitialWeight(String(foundFeeder.initialDistributedWeight ?? ''));
-        setFeedInterval(String(foundFeeder.feedInterval ?? ''));
-        setStartMinutes(isoToMinutes(foundFeeder.startFeedTime));
-        setStopMinutes(isoToMinutes(foundFeeder.stopFeedTime));
-      }
-    }
-  }, [feeder, feederId]);
+  useAutoRefresh(() => load({ silent: true }));
 
-  const fetchLogs = useCallback(async () => {
-    if (!feederId) return;
-    setLogsLoading(true);
-    setLogsError(null);
+  const back = { label: 'Início', onPress: () => router.back() };
+
+  if (!feeder) {
+    return (
+      <Screen header={<AppHeader title="Alimentador" back={back} />} scroll={false}>
+        {isLoading || lastUpdated === null ? (
+          <View style={styles.section}>
+            <Skeleton height={120} />
+            <Skeleton height={56} />
+            <Skeleton height={220} />
+          </View>
+        ) : (
+          <EmptyState
+            icon="help-circle-outline"
+            title="Alimentador não encontrado"
+            message="Ele pode ter sido removido. Volte para o início."
+            action={{ label: 'Voltar ao início', icon: 'home', onPress: () => router.back() }}
+          />
+        )}
+      </Screen>
+    );
+  }
+
+  const today = getFeederToday(feeder, logs);
+  const nextFeed = getNextFeed(feeder, logs);
+  const remaining = getRemainingDoses(feeder, logs);
+  const calibrationMissing = needsCalibration(feeder);
+  const configured = isConfigured(feeder);
+  const start = isoToMinutes(feeder.startFeedTime);
+  const stop = isoToMinutes(feeder.stopFeedTime);
+  const lastSeen = formatRelativeTime(feeder.lastSeenAt);
+
+  const speech = () =>
+    buildFeederSpeech({
+      name: feeder.name,
+      isActive: feeder.isActive,
+      isOnline: feeder.isOnline,
+      deliveredKg: today.deliveredKg,
+      goalKg: today.goalKg,
+      nextFeedMinutes: nextFeed?.minutes ?? null,
+      nextFeedTomorrow: nextFeed?.tomorrow,
+      needsCalibration: calibrationMissing,
+    });
+
+  function goToConfig() {
+    router.push({ pathname: '/configurar', params: { feederId: feeder!.id } });
+  }
+
+  async function setActive(next: boolean) {
+    if (next) haptics.turnOn();
+    else haptics.turnOff();
+
+    setIsToggling(true);
+    patchFeeder(feeder!.id, { isActive: next }); // aparece na hora; desfaz se falhar
     try {
-      const { data } = await api.get<IFeedingLog[]>(`/feeders/logs/${feederId}`);
-      setLogs(Array.isArray(data) ? data : []);
+      await api.patch(`/feeders/${feeder!.id}`, { isActive: next });
     } catch (error: any) {
-      console.error('Erro ao buscar alimentações:', error.response?.data || error.message);
-      setLogsError('Não foi possível carregar as alimentações de hoje.');
-    } finally {
-      setLogsLoading(false);
-    }
-  }, [feederId]);
-
-  useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
-
-  const isCalibrated =
-    !!selectedFeeder?.kilogramsPerSecond && selectedFeeder.kilogramsPerSecond > 0;
-
-  const weightValue = parseDecimal(initialWeight);
-  const intervalValue = parseDecimal(feedInterval);
-  const schedule = validateFeedSchedule({
-    startMinutes,
-    stopMinutes,
-    feedIntervalMinutes: intervalValue,
-    dailyGoalKg: weightValue,
-    kilogramsPerSecond: selectedFeeder?.kilogramsPerSecond ?? null,
-  });
-
-  function handleToggleFeederActive(newValue: boolean) {
-    if (newValue === true) {
-      setIsActiveFeeder(true);
-    } else {
-      Alert.alert('Desativar Alimentador', 'Tem certeza que deseja desativar este alimentador?', [
-        { text: 'Cancelar', onPress: () => {}, style: 'cancel' },
-        { text: 'Desativar', onPress: () => setIsActiveFeeder(false), style: 'destructive' },
-      ]);
-    }
-  }
-
-  function setTime(field: TimeField, minutes: MinutesOfDay) {
-    if (field === 'start') setStartMinutes(minutes);
-    else setStopMinutes(minutes);
-  }
-
-  function handleOpenTimePicker(field: TimeField) {
-    const current = field === 'start' ? startMinutes : stopMinutes;
-
-    if (Platform.OS === 'android') {
-      DateTimePickerAndroid.open({
-        value: minutesToPickerDate(current),
-        mode: 'time',
-        is24Hour: true,
-        onChange: (event: DateTimePickerEvent, date?: Date) => {
-          if (event.type === 'set' && date) {
-            setTime(field, pickerDateToMinutes(date));
-          }
-        },
-      });
-    } else {
-      setIosPickerField((open) => (open === field ? null : field));
-    }
-  }
-
-  function handleIosTimeChange(_event: DateTimePickerEvent, date?: Date) {
-    if (iosPickerField && date) {
-      setTime(iosPickerField, pickerDateToMinutes(date));
-    }
-  }
-
-  async function handleSaveFeederDetails() {
-    if (initialWeight.trim() !== '' && (weightValue === null || weightValue < 0)) {
-      Alert.alert('Valor inválido', 'Informe uma quantidade de ração válida em kg.');
-      return;
-    }
-
-    if (
-      feedInterval.trim() !== '' &&
-      (intervalValue === null || intervalValue <= 0 || !Number.isInteger(intervalValue))
-    ) {
+      console.error('Erro ao ligar/desligar:', error.response?.data || error.message);
+      patchFeeder(feeder!.id, { isActive: !next });
+      haptics.error();
       Alert.alert(
-        'Valor inválido',
-        'O intervalo entre doses deve ser um número inteiro de minutos.'
+        next ? 'Não foi possível ligar' : 'Não foi possível desligar',
+        'Verifique a internet do celular e tente de novo.'
+      );
+    } finally {
+      setIsToggling(false);
+    }
+  }
+
+  function handleToggle() {
+    if (feeder!.isActive) {
+      Alert.alert(
+        'Desligar o alimentador?',
+        'Os peixes deste viveiro não vão receber ração até você ligar de novo.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Desligar', style: 'destructive', onPress: () => setActive(false) },
+        ]
       );
       return;
     }
-
-    // Um alimentador ativo precisa de uma configuração que o backend consiga executar.
-    // Desativado, pode ser salvo incompleto (ex.: só para desligar).
-    if (isActiveFeeder) {
-      if (weightValue === null || weightValue <= 0) {
-        Alert.alert('Quantidade obrigatória', 'Informe a quantidade de ração diária em kg.');
-        return;
-      }
-      if ('error' in schedule) {
-        Alert.alert('Configuração inválida', schedule.error);
-        return;
-      }
+    if (!configured && !calibrationMissing) {
+      Alert.alert(
+        'Falta configurar',
+        'Antes de ligar, diga quanta ração por dia, os horários e de quanto em quanto tempo.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Configurar agora', onPress: goToConfig },
+        ]
+      );
+      return;
     }
-
-    setIosPickerField(null);
-    setIsSaving(true);
-    try {
-      const changes = {
-        isActive: isActiveFeeder,
-        ...(weightValue !== null && { initialDistributedWeight: weightValue }),
-        ...(intervalValue !== null && { feedInterval: intervalValue }),
-        ...(startMinutes !== null && { startFeedTime: minutesToIso(startMinutes) }),
-        ...(stopMinutes !== null && { stopFeedTime: minutesToIso(stopMinutes) }),
-      };
-      await api.patch(`/feeders/${feederId}`, changes);
-      // A tela Início já mostra o novo estado, sem esperar a próxima atualização.
-      patchFeeder(feederId, changes);
-      Alert.alert('Sucesso', 'Detalhes do alimentador salvos com sucesso!', [
-        { text: 'OK', onPress: () => router.replace('/') },
-      ]);
-    } catch (error: any) {
-      console.error('Erro ao salvar alimentador:', error.response?.data || error.message);
-      Alert.alert('Erro', 'Não foi possível salvar os detalhes do alimentador. Tente novamente.');
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  if (isLoading) {
-    return <SplashScreen />;
+    setActive(true);
   }
 
   return (
     <Screen
-      header={
-        <AppHeader
-          title={selectedFeeder?.name ?? 'Alimentador'}
-          back={{ label: 'Início', onPress: () => router.back() }}
+      header={<AppHeader title={feeder.name} back={back} right={<SpeakButton text={speech} />} />}
+      refreshing={isRefreshing}
+      onRefresh={() => load({ pull: true })}
+      footer={
+        <BigButton
+          title="Mudar configuração"
+          icon="tune-variant"
+          variant="secondary"
+          large
+          onPress={goToConfig}
         />
-      }
-      contentStyle={styles.scrollContent}>
-      <View style={styles.section}>
-        <View style={styles.switchContainer}>
-          <Text style={styles.switchHeaderText}>{selectedFeeder?.name}</Text>
-          <Switch
-            value={isActiveFeeder}
-            onValueChange={handleToggleFeederActive}
-            trackColor={{ false: '#767577', true: '#007458' }}
-            thumbColor={isActiveFeeder ? '#6ec531' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
-            accessibilityLabel="Alimentador ativo"
-          />
-        </View>
-        {selectedFeeder && (
-          <ConnectionStatus
-            isOnline={selectedFeeder.isOnline}
-            lastSeenAt={selectedFeeder.lastSeenAt}
-          />
-        )}
-      </View>
+      }>
+      <PowerToggle isOn={feeder.isActive} busy={isToggling} onPress={handleToggle} />
 
-      {selectedFeeder && !isCalibrated && (
-        <View style={styles.warningBox}>
-          <Ionicons name="warning-outline" size={20} color="#8A5A00" />
-          <Text style={styles.warningText}>
-            Alimentador não calibrado. Ele não vai distribuir ração até que a vazão (kg/s) seja
-            configurada. Fale com o suporte.
-          </Text>
+      {feeder.isOnline ? (
+        <View style={styles.signalOk} accessible accessibilityLabel="Com sinal, funcionando agora">
+          <Icon name="wifi" size={26} color={colors.primary} />
+          <AppText variant="body" color={colors.primary} style={styles.bold}>
+            Com sinal · funcionando agora
+          </AppText>
         </View>
+      ) : (
+        <Banner
+          icon="wifi-off"
+          title={lastSeen ? `Sem sinal ${lastSeen}` : 'Sem sinal'}
+          message="Veja se o alimentador está na tomada e se a internet da fazenda está funcionando."
+        />
       )}
 
-      <View style={styles.section}>
-        <Text style={styles.label}>
-          Insira a quantidade de ração que será distribuída ao longo do dia
-        </Text>
-        <View style={styles.inputInitialWeight}>
-          <TextInput
-            style={styles.inputInitialWeightText}
-            value={initialWeight}
-            onChangeText={setInitialWeight}
-            keyboardType="decimal-pad"
-            placeholder="0"
-            accessibilityLabel="Quantidade de ração diária em kg"
-          />
-          <Text style={styles.inputInitialWeightText}>kg</Text>
-        </View>
-      </View>
+      {calibrationMissing && (
+        <Banner
+          title="Falta ajustar o motor"
+          message="Este alimentador ainda não sabe quanta ração solta por segundo. Até isso ser ajustado, ele não vai alimentar."
+          action={{
+            label: 'Chamar o suporte',
+            icon: 'whatsapp',
+            onPress: () =>
+              openWhatsAppSupport(
+                `Olá, o ${feeder.name} precisa ajustar o motor (calibração). Podem me ajudar?`
+              ),
+          }}
+        />
+      )}
 
-      <View style={styles.section}>
-        <Text style={styles.label}>
-          Configure o horário inicial e final de funcionamento do raçoador
-        </Text>
-        <View style={styles.timeBoxContainer}>
-          <TouchableOpacity
-            style={[styles.timeBox, iosPickerField === 'start' && styles.timeBoxSelected]}
-            onPress={() => handleOpenTimePicker('start')}
-            accessibilityRole="button"
-            accessibilityLabel={`Horário inicial: ${formatMinutes(startMinutes)}. Toque para alterar`}>
-            <Text style={styles.timeBoxTextHeader}>Horário Inicial</Text>
-            <Text style={styles.timeBoxText}>{formatMinutes(startMinutes)}</Text>
-            <Text style={styles.hint}>Toque para alterar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.timeBox, iosPickerField === 'stop' && styles.timeBoxSelected]}
-            onPress={() => handleOpenTimePicker('stop')}
-            accessibilityRole="button"
-            accessibilityLabel={`Horário final: ${formatMinutes(stopMinutes)}. Toque para alterar`}>
-            <Text style={styles.timeBoxTextHeader}>Horário Final</Text>
-            <Text style={styles.timeBoxText}>{formatMinutes(stopMinutes)}</Text>
-            <Text style={styles.hint}>Toque para alterar</Text>
-          </TouchableOpacity>
-        </View>
-        {Platform.OS === 'ios' && iosPickerField && (
-          <View style={styles.iosPickerContainer}>
-            <DateTimePicker
-              value={minutesToPickerDate(iosPickerField === 'start' ? startMinutes : stopMinutes)}
-              mode="time"
-              display="spinner"
-              is24Hour
-              locale="pt-BR"
-              onChange={handleIosTimeChange}
-            />
-            <Button title="Confirmar horário" onPress={() => setIosPickerField(null)} />
+      {!configured && !calibrationMissing && (
+        <Banner
+          variant="info"
+          icon="tune-variant"
+          title="Falta configurar"
+          message="Diga quanta ração por dia, os horários e de quanto em quanto tempo."
+          action={{ label: 'Configurar agora', icon: 'arrow-right', onPress: goToConfig }}
+        />
+      )}
+
+      <Card>
+        <AppText variant="overline" color={colors.textMuted} accessibilityRole="header">
+          HOJE
+        </AppText>
+
+        {today.goalKg !== null && (
+          <View style={styles.todayRow}>
+            <ProgressRing
+              progress={today.progress ?? 0}
+              accessibilityLabel={
+                today.deliveredKg !== null
+                  ? `Hoje: ${formatKg(today.deliveredKg)} de ${formatKg(today.goalKg)} quilos`
+                  : `Meta de hoje: ${formatKg(today.goalKg)} quilos`
+              }>
+              <AppText variant="question" style={styles.ringNumber}>
+                {today.deliveredKg !== null ? formatKg(today.deliveredKg) : '--'}
+              </AppText>
+              <AppText variant="label" color={colors.textMuted}>
+                de {formatKg(today.goalKg)} kg
+              </AppText>
+            </ProgressRing>
+
+            <View style={styles.todayInfo}>
+              <View>
+                <AppText variant="label" color={colors.textMuted}>
+                  Próxima ração
+                </AppText>
+                <AppText variant="question">
+                  {!feeder.isActive
+                    ? 'Desligado'
+                    : nextFeed
+                      ? formatMinutes(nextFeed.minutes)
+                      : '--:--'}
+                </AppText>
+                {nextFeed?.tomorrow && (
+                  <AppText variant="label" color={colors.textMuted}>
+                    amanhã
+                  </AppText>
+                )}
+              </View>
+              {feeder.isActive && remaining > 0 && (
+                <View>
+                  <AppText variant="label" color={colors.textMuted}>
+                    Faltam hoje
+                  </AppText>
+                  <AppText variant="title">
+                    {remaining} {remaining === 1 ? 'vez' : 'vezes'}
+                  </AppText>
+                </View>
+              )}
+            </View>
           </View>
         )}
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.label}>Intervalo entre doses</Text>
-        <View style={styles.intervalRow}>
-          <TextInput
-            style={styles.intervalInput}
-            value={feedInterval}
-            onChangeText={setFeedInterval}
-            keyboardType="number-pad"
-            placeholder="30"
-            accessibilityLabel="Intervalo entre doses em minutos"
-          />
-          <Text style={styles.intervalUnit}>minutos</Text>
-        </View>
-        <Text style={'error' in schedule ? styles.scheduleError : styles.hint}>
-          {'error' in schedule
-            ? schedule.error
-            : schedule.plan.doseKg !== null
-              ? `${schedule.plan.numberOfDoses} doses de ${schedule.plan.doseKg.toFixed(2)} kg por dia`
-              : `${schedule.plan.numberOfDoses} doses por dia`}
-        </Text>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.logsHeader}>
-          <Text style={styles.sectionTitle}>Alimentações de hoje</Text>
-          <TouchableOpacity
-            onPress={fetchLogs}
-            disabled={logsLoading}
-            accessibilityRole="button"
-            accessibilityLabel="Atualizar alimentações de hoje">
-            {logsLoading ? (
-              <ActivityIndicator size="small" color="#585858" />
-            ) : (
-              <Ionicons name="refresh" size={22} color="#585858" />
-            )}
-          </TouchableOpacity>
-        </View>
-        {logsError ? (
-          <Text style={styles.scheduleError}>{logsError}</Text>
+        {logs ? (
+          <DoseList logs={logs} />
         ) : (
-          <FeedingLogList logs={logs} />
+          <AppText variant="bodyRegular" color={colors.textMuted}>
+            Não foi possível ver as rações de hoje. Puxe a tela para baixo para tentar de novo.
+          </AppText>
         )}
-      </View>
+      </Card>
 
-      <View style={styles.containerButton}>
-        <Button
-          style={styles.btnSave}
-          title={isSaving ? 'Salvando...' : 'Salvar'}
-          onPress={handleSaveFeederDetails}
-          disabled={isSaving}
+      <View style={styles.chips}>
+        <ConfigChip
+          icon="sack"
+          label={
+            feeder.initialDistributedWeight
+              ? `${formatKg(feeder.initialDistributedWeight)} kg por dia`
+              : 'Ração: falta configurar'
+          }
+        />
+        <ConfigChip
+          icon="clock-outline"
+          label={
+            start !== null && stop !== null
+              ? `${formatMinutes(start)} até ${formatMinutes(stop)}`
+              : 'Horário: falta configurar'
+          }
+        />
+        <ConfigChip
+          icon="history"
+          label={
+            feeder.feedInterval
+              ? `a cada ${feeder.feedInterval} min`
+              : 'Intervalo: falta configurar'
+          }
         />
       </View>
     </Screen>
   );
 }
 
+function ConfigChip({ icon, label }: { icon: IconName; label: string }) {
+  return (
+    <View style={styles.chip} accessible accessibilityLabel={label}>
+      <Icon name={icon} size={20} color={colors.textSecondary} />
+      <AppText variant="label" color={colors.textSecondary}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  scrollContent: {
-    gap: 24,
-    paddingBottom: 40,
-  },
   section: {
-    gap: 10,
+    gap: spacing.md,
   },
-  headerText: {
-    fontSize: 24,
-    fontWeight: '900',
-    marginTop: 10,
-  },
-  switchContainer: {
+  signalOk: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.md,
+    minHeight: 56,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySoft,
   },
-  switchHeaderText: {
-    fontSize: 24,
-    fontWeight: '900',
-    flexShrink: 1,
+  bold: {
+    fontFamily: 'Nunito_800ExtraBold',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '400',
-  },
-  hint: {
-    fontSize: 12,
-    color: '#585858',
-  },
-  scheduleError: {
-    fontSize: 14,
-    color: '#C62828',
-  },
-  warningBox: {
+  todayRow: {
     flexDirection: 'row',
-    gap: 8,
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: '#FFF4D6',
-    borderWidth: 1,
-    borderColor: '#F0C36D',
+    alignItems: 'center',
+    gap: spacing.xl,
   },
-  warningText: {
+  ringNumber: {
+    fontSize: 34,
+    lineHeight: 38,
+  },
+  todayInfo: {
     flex: 1,
-    fontSize: 14,
-    color: '#5C3D00',
+    gap: spacing.md,
   },
-  btnSave: {
-    backgroundColor: '#40A014',
-  },
-  containerButton: {
-    gap: 20,
-  },
-  inputInitialWeight: {
-    alignSelf: 'center',
-    width: 213,
-    height: 140,
-    backgroundColor: '#f7f7f7',
-    justifyContent: 'center',
-    alignItems: 'center',
+  chips: {
     flexDirection: 'row',
-    borderWidth: 2,
-    borderRadius: 10,
-    borderColor: '#DDD',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
-  inputInitialWeightText: {
-    fontSize: 48,
-    fontWeight: '900',
-    color: '#585858',
-  },
-  timeBoxContainer: {
-    width: '100%',
-    justifyContent: 'space-between',
+  chip: {
     flexDirection: 'row',
-  },
-  timeBox: {
-    backgroundColor: '#f7f7f7',
-    borderWidth: 1,
-    borderColor: '#DDD',
-    borderRadius: 10,
-    justifyContent: 'center',
     alignItems: 'center',
-    width: '48%',
-    padding: 15,
     gap: 6,
-  },
-  timeBoxSelected: {
-    borderColor: '#40A014',
-    borderWidth: 2,
-  },
-  timeBoxTextHeader: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  timeBoxText: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  iosPickerContainer: {
-    gap: 8,
-  },
-  intervalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  intervalInput: {
-    minWidth: 100,
-    height: 52,
-    paddingHorizontal: 14,
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#585858',
-    textAlign: 'center',
-    backgroundColor: '#f7f7f7',
-    borderWidth: 2,
-    borderRadius: 10,
-    borderColor: '#DDD',
-  },
-  intervalUnit: {
-    fontSize: 16,
-    color: '#585858',
-  },
-  logsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    minHeight: 40,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 });

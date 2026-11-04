@@ -23,6 +23,7 @@ export default function ProtectedLayout() {
       screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen name="inicio" />
       <Stack.Screen name="feederDetail" />
+      <Stack.Screen name="configurar" />
     </Stack>
   );
 }

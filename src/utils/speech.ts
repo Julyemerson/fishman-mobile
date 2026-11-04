@@ -24,6 +24,8 @@ export interface FeederSpeechInput {
   goalKg: number | null;
   /** Próxima dose, em minutos desde a meia-noite. */
   nextFeedMinutes?: number | null;
+  /** A próxima dose é só amanhã. */
+  nextFeedTomorrow?: boolean;
   /** Falta calibração (kg/s). */
   needsCalibration?: boolean;
 }
@@ -36,6 +38,7 @@ export function buildFeederSpeech({
   deliveredKg,
   goalKg,
   nextFeedMinutes,
+  nextFeedTomorrow,
   needsCalibration,
 }: FeederSpeechInput): string {
   const parts: string[] = [];
@@ -52,7 +55,9 @@ export function buildFeederSpeech({
   }
 
   if (isActive && nextFeedMinutes != null) {
-    parts.push(`A próxima ração é às ${formatTimeSpoken(nextFeedMinutes)}.`);
+    parts.push(
+      `A próxima ração é ${nextFeedTomorrow ? 'amanhã ' : ''}às ${formatTimeSpoken(nextFeedMinutes)}.`
+    );
   }
 
   if (needsCalibration) {
