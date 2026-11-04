@@ -14,17 +14,15 @@ import {
   Alert,
   Platform,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 
 import { Button } from '@/components/Button';
 import ConnectionStatus from '@/components/ConnectionStatus';
-import { Container } from '@/components/Container';
 import FeedingLogList from '@/components/FeedingLogList';
 import SplashScreen from '@/components/SplashScreen';
+import { AppHeader, Screen } from '@/components/ui';
 import api from '@/services/api';
-import { useFarmStore } from '@/store/farm.store';
 import { useFeederStore } from '@/store/feeder.store';
 import { IFeeder, IFeedingLog } from '@/types/feeder';
 import {
@@ -62,8 +60,7 @@ export default function FeederDetail() {
   const [logsError, setLogsError] = useState<string | null>(null);
 
   const { feederId } = useLocalSearchParams<{ feederId: string }>();
-  const { feeder, isLoading } = useFeederStore();
-  const { farm } = useFarmStore();
+  const { feeders: feeder, isLoading, patchFeeder } = useFeederStore();
 
   const router = useRouter();
 
@@ -188,13 +185,16 @@ export default function FeederDetail() {
     setIosPickerField(null);
     setIsSaving(true);
     try {
-      await api.patch(`/feeders/${feederId}`, {
+      const changes = {
         isActive: isActiveFeeder,
         ...(weightValue !== null && { initialDistributedWeight: weightValue }),
         ...(intervalValue !== null && { feedInterval: intervalValue }),
         ...(startMinutes !== null && { startFeedTime: minutesToIso(startMinutes) }),
         ...(stopMinutes !== null && { stopFeedTime: minutesToIso(stopMinutes) }),
-      });
+      };
+      await api.patch(`/feeders/${feederId}`, changes);
+      // A tela Início já mostra o novo estado, sem esperar a próxima atualização.
+      patchFeeder(feederId, changes);
       Alert.alert('Sucesso', 'Detalhes do alimentador salvos com sucesso!', [
         { text: 'OK', onPress: () => router.replace('/') },
       ]);
@@ -211,150 +211,153 @@ export default function FeederDetail() {
   }
 
   return (
-    <Container>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <View style={styles.section}>
-          <Text style={styles.headerText}>{farm.name}</Text>
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchHeaderText}>{selectedFeeder?.name}</Text>
-            <Switch
-              value={isActiveFeeder}
-              onValueChange={handleToggleFeederActive}
-              trackColor={{ false: '#767577', true: '#007458' }}
-              thumbColor={isActiveFeeder ? '#6ec531' : '#f4f3f4'}
-              ios_backgroundColor="#3e3e3e"
-              accessibilityLabel="Alimentador ativo"
-            />
-          </View>
-          {selectedFeeder && (
-            <ConnectionStatus
-              isOnline={selectedFeeder.isOnline}
-              lastSeenAt={selectedFeeder.lastSeenAt}
-            />
-          )}
+    <Screen
+      header={
+        <AppHeader
+          title={selectedFeeder?.name ?? 'Alimentador'}
+          back={{ label: 'Início', onPress: () => router.back() }}
+        />
+      }
+      contentStyle={styles.scrollContent}>
+      <View style={styles.section}>
+        <View style={styles.switchContainer}>
+          <Text style={styles.switchHeaderText}>{selectedFeeder?.name}</Text>
+          <Switch
+            value={isActiveFeeder}
+            onValueChange={handleToggleFeederActive}
+            trackColor={{ false: '#767577', true: '#007458' }}
+            thumbColor={isActiveFeeder ? '#6ec531' : '#f4f3f4'}
+            ios_backgroundColor="#3e3e3e"
+            accessibilityLabel="Alimentador ativo"
+          />
         </View>
+        {selectedFeeder && (
+          <ConnectionStatus
+            isOnline={selectedFeeder.isOnline}
+            lastSeenAt={selectedFeeder.lastSeenAt}
+          />
+        )}
+      </View>
 
-        {selectedFeeder && !isCalibrated && (
-          <View style={styles.warningBox}>
-            <Ionicons name="warning-outline" size={20} color="#8A5A00" />
-            <Text style={styles.warningText}>
-              Alimentador não calibrado. Ele não vai distribuir ração até que a vazão (kg/s) seja
-              configurada. Fale com o suporte.
-            </Text>
+      {selectedFeeder && !isCalibrated && (
+        <View style={styles.warningBox}>
+          <Ionicons name="warning-outline" size={20} color="#8A5A00" />
+          <Text style={styles.warningText}>
+            Alimentador não calibrado. Ele não vai distribuir ração até que a vazão (kg/s) seja
+            configurada. Fale com o suporte.
+          </Text>
+        </View>
+      )}
+
+      <View style={styles.section}>
+        <Text style={styles.label}>
+          Insira a quantidade de ração que será distribuída ao longo do dia
+        </Text>
+        <View style={styles.inputInitialWeight}>
+          <TextInput
+            style={styles.inputInitialWeightText}
+            value={initialWeight}
+            onChangeText={setInitialWeight}
+            keyboardType="decimal-pad"
+            placeholder="0"
+            accessibilityLabel="Quantidade de ração diária em kg"
+          />
+          <Text style={styles.inputInitialWeightText}>kg</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>
+          Configure o horário inicial e final de funcionamento do raçoador
+        </Text>
+        <View style={styles.timeBoxContainer}>
+          <TouchableOpacity
+            style={[styles.timeBox, iosPickerField === 'start' && styles.timeBoxSelected]}
+            onPress={() => handleOpenTimePicker('start')}
+            accessibilityRole="button"
+            accessibilityLabel={`Horário inicial: ${formatMinutes(startMinutes)}. Toque para alterar`}>
+            <Text style={styles.timeBoxTextHeader}>Horário Inicial</Text>
+            <Text style={styles.timeBoxText}>{formatMinutes(startMinutes)}</Text>
+            <Text style={styles.hint}>Toque para alterar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.timeBox, iosPickerField === 'stop' && styles.timeBoxSelected]}
+            onPress={() => handleOpenTimePicker('stop')}
+            accessibilityRole="button"
+            accessibilityLabel={`Horário final: ${formatMinutes(stopMinutes)}. Toque para alterar`}>
+            <Text style={styles.timeBoxTextHeader}>Horário Final</Text>
+            <Text style={styles.timeBoxText}>{formatMinutes(stopMinutes)}</Text>
+            <Text style={styles.hint}>Toque para alterar</Text>
+          </TouchableOpacity>
+        </View>
+        {Platform.OS === 'ios' && iosPickerField && (
+          <View style={styles.iosPickerContainer}>
+            <DateTimePicker
+              value={minutesToPickerDate(iosPickerField === 'start' ? startMinutes : stopMinutes)}
+              mode="time"
+              display="spinner"
+              is24Hour
+              locale="pt-BR"
+              onChange={handleIosTimeChange}
+            />
+            <Button title="Confirmar horário" onPress={() => setIosPickerField(null)} />
           </View>
         )}
+      </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            Insira a quantidade de ração que será distribuída ao longo do dia
-          </Text>
-          <View style={styles.inputInitialWeight}>
-            <TextInput
-              style={styles.inputInitialWeightText}
-              value={initialWeight}
-              onChangeText={setInitialWeight}
-              keyboardType="decimal-pad"
-              placeholder="0"
-              accessibilityLabel="Quantidade de ração diária em kg"
-            />
-            <Text style={styles.inputInitialWeightText}>kg</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            Configure o horário inicial e final de funcionamento do raçoador
-          </Text>
-          <View style={styles.timeBoxContainer}>
-            <TouchableOpacity
-              style={[styles.timeBox, iosPickerField === 'start' && styles.timeBoxSelected]}
-              onPress={() => handleOpenTimePicker('start')}
-              accessibilityRole="button"
-              accessibilityLabel={`Horário inicial: ${formatMinutes(startMinutes)}. Toque para alterar`}>
-              <Text style={styles.timeBoxTextHeader}>Horário Inicial</Text>
-              <Text style={styles.timeBoxText}>{formatMinutes(startMinutes)}</Text>
-              <Text style={styles.hint}>Toque para alterar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.timeBox, iosPickerField === 'stop' && styles.timeBoxSelected]}
-              onPress={() => handleOpenTimePicker('stop')}
-              accessibilityRole="button"
-              accessibilityLabel={`Horário final: ${formatMinutes(stopMinutes)}. Toque para alterar`}>
-              <Text style={styles.timeBoxTextHeader}>Horário Final</Text>
-              <Text style={styles.timeBoxText}>{formatMinutes(stopMinutes)}</Text>
-              <Text style={styles.hint}>Toque para alterar</Text>
-            </TouchableOpacity>
-          </View>
-          {Platform.OS === 'ios' && iosPickerField && (
-            <View style={styles.iosPickerContainer}>
-              <DateTimePicker
-                value={minutesToPickerDate(iosPickerField === 'start' ? startMinutes : stopMinutes)}
-                mode="time"
-                display="spinner"
-                is24Hour
-                locale="pt-BR"
-                onChange={handleIosTimeChange}
-              />
-              <Button title="Confirmar horário" onPress={() => setIosPickerField(null)} />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Intervalo entre doses</Text>
-          <View style={styles.intervalRow}>
-            <TextInput
-              style={styles.intervalInput}
-              value={feedInterval}
-              onChangeText={setFeedInterval}
-              keyboardType="number-pad"
-              placeholder="30"
-              accessibilityLabel="Intervalo entre doses em minutos"
-            />
-            <Text style={styles.intervalUnit}>minutos</Text>
-          </View>
-          <Text style={'error' in schedule ? styles.scheduleError : styles.hint}>
-            {'error' in schedule
-              ? schedule.error
-              : schedule.plan.doseKg !== null
-                ? `${schedule.plan.numberOfDoses} doses de ${schedule.plan.doseKg.toFixed(2)} kg por dia`
-                : `${schedule.plan.numberOfDoses} doses por dia`}
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.logsHeader}>
-            <Text style={styles.sectionTitle}>Alimentações de hoje</Text>
-            <TouchableOpacity
-              onPress={fetchLogs}
-              disabled={logsLoading}
-              accessibilityRole="button"
-              accessibilityLabel="Atualizar alimentações de hoje">
-              {logsLoading ? (
-                <ActivityIndicator size="small" color="#585858" />
-              ) : (
-                <Ionicons name="refresh" size={22} color="#585858" />
-              )}
-            </TouchableOpacity>
-          </View>
-          {logsError ? (
-            <Text style={styles.scheduleError}>{logsError}</Text>
-          ) : (
-            <FeedingLogList logs={logs} />
-          )}
-        </View>
-
-        <View style={styles.containerButton}>
-          <Button
-            style={styles.btnSave}
-            title={isSaving ? 'Salvando...' : 'Salvar'}
-            onPress={handleSaveFeederDetails}
-            disabled={isSaving}
+      <View style={styles.section}>
+        <Text style={styles.label}>Intervalo entre doses</Text>
+        <View style={styles.intervalRow}>
+          <TextInput
+            style={styles.intervalInput}
+            value={feedInterval}
+            onChangeText={setFeedInterval}
+            keyboardType="number-pad"
+            placeholder="30"
+            accessibilityLabel="Intervalo entre doses em minutos"
           />
-          <Button title="Voltar" onPress={() => router.back()} />
+          <Text style={styles.intervalUnit}>minutos</Text>
         </View>
-      </ScrollView>
-    </Container>
+        <Text style={'error' in schedule ? styles.scheduleError : styles.hint}>
+          {'error' in schedule
+            ? schedule.error
+            : schedule.plan.doseKg !== null
+              ? `${schedule.plan.numberOfDoses} doses de ${schedule.plan.doseKg.toFixed(2)} kg por dia`
+              : `${schedule.plan.numberOfDoses} doses por dia`}
+        </Text>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.logsHeader}>
+          <Text style={styles.sectionTitle}>Alimentações de hoje</Text>
+          <TouchableOpacity
+            onPress={fetchLogs}
+            disabled={logsLoading}
+            accessibilityRole="button"
+            accessibilityLabel="Atualizar alimentações de hoje">
+            {logsLoading ? (
+              <ActivityIndicator size="small" color="#585858" />
+            ) : (
+              <Ionicons name="refresh" size={22} color="#585858" />
+            )}
+          </TouchableOpacity>
+        </View>
+        {logsError ? (
+          <Text style={styles.scheduleError}>{logsError}</Text>
+        ) : (
+          <FeedingLogList logs={logs} />
+        )}
+      </View>
+
+      <View style={styles.containerButton}>
+        <Button
+          style={styles.btnSave}
+          title={isSaving ? 'Salvando...' : 'Salvar'}
+          onPress={handleSaveFeederDetails}
+          disabled={isSaving}
+        />
+      </View>
+    </Screen>
   );
 }
 

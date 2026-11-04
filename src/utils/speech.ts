@@ -63,3 +63,69 @@ export function buildFeederSpeech({
 
   return parts.join(' ');
 }
+
+export interface FarmSpeechInput {
+  farmName: string;
+  feeders: {
+    name: string;
+    isActive: boolean;
+    isOnline: boolean;
+    kilogramsPerSecond: number | null;
+  }[];
+  deliveredKg: number;
+  goalKg: number;
+}
+
+/** "Fazenda Teste. 2 de 3 alimentadores estão ligados. Hoje os peixes já comeram 31 de 60 quilos. Atenção: Alimentador 2 está sem sinal." */
+export function buildFarmSpeech({
+  farmName,
+  feeders,
+  deliveredKg,
+  goalKg,
+}: FarmSpeechInput): string {
+  const parts: string[] = [];
+  if (farmName) parts.push(`${farmName}.`);
+
+  const total = feeders.length;
+  const on = feeders.filter((f) => f.isActive).length;
+  if (total === 0) {
+    parts.push('Nenhum alimentador cadastrado.');
+    return parts.join(' ');
+  }
+  parts.push(
+    total === 1
+      ? `O alimentador está ${on ? 'ligado' : 'desligado'}.`
+      : `${on} de ${total} alimentadores estão ligados.`
+  );
+
+  if (goalKg > 0) {
+    parts.push(
+      deliveredKg > 0
+        ? `Hoje os peixes já comeram ${formatKgSpoken(deliveredKg).replace(/ quilos?$/, '')} de ${formatKgSpoken(goalKg)}.`
+        : 'Hoje os peixes ainda não comeram.'
+    );
+  }
+
+  const offline = feeders.filter((f) => !f.isOnline).map((f) => f.name);
+  const uncalibrated = feeders
+    .filter((f) => f.isOnline && f.isActive && (!f.kilogramsPerSecond || f.kilogramsPerSecond <= 0))
+    .map((f) => f.name);
+  if (offline.length) {
+    parts.push(
+      `Atenção: ${joinNames(offline)} ${offline.length === 1 ? 'está' : 'estão'} sem sinal.`
+    );
+  }
+  if (uncalibrated.length) {
+    parts.push(
+      `${joinNames(uncalibrated)} ${uncalibrated.length === 1 ? 'precisa' : 'precisam'} ajustar o motor.`
+    );
+  }
+
+  return parts.join(' ');
+}
+
+function joinNames(names: string[]): string {
+  return names.length <= 1
+    ? (names[0] ?? '')
+    : `${names.slice(0, -1).join(', ')} e ${names.at(-1)}`;
+}
