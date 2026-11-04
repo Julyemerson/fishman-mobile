@@ -1,155 +1,219 @@
-import { Stack } from 'expo-router';
-import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isAxiosError } from 'axios';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
   Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
-  Alert,
+  TextInput,
+  View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Container } from '@/components/Container';
-import Input from '@/components/Input';
+import { AppText, Banner, BigButton, SpeakButton, TextField } from '@/components/ui';
 import api from '@/services/api';
 import { useAuthStore } from '@/store/auth.store';
+import { colors, spacing } from '@/theme';
+import { haptics } from '@/utils/haptics';
+import { openWhatsAppSupport } from '@/utils/support';
 
-export default function App() {
-  const logo = require('@/assets/logo_pintinho.webp');
+const logo = require('@/assets/logo_pintinho.webp');
+const LAST_EMAIL_KEY = 'dr-pescados:last-email';
+
+const HELP_SPEECH =
+  'Para entrar, digite seu email e sua senha e toque em Entrar. ' +
+  'Se esqueceu a senha ou precisa de ajuda, toque nos botões de baixo para falar com o suporte pelo WhatsApp.';
+
+/** Mensagem curta e o que fazer, para cada tipo de falha. */
+function loginErrorMessage(error: unknown): string {
+  if (isAxiosError(error)) {
+    if (!error.response) return 'Sem internet. Verifique o sinal do celular e tente de novo.';
+    if (error.response.status === 401 || error.response.status === 400) {
+      return 'Email ou senha errados. Confira e tente de novo.';
+    }
+  }
+  return 'Algo deu errado. Tente de novo em alguns minutos.';
+}
+
+export default function Login() {
+  const login = useAuthStore((s) => s.login);
+  const passwordRef = useRef<TextInput>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [invalidFields, setInvalidFields] = useState({ email: false, password: false });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuthStore();
-
-  function handleForgotPassword() {
-    console.log('Esqueci minha senha');
-  }
+  // Quem já entrou uma vez não precisa digitar o email de novo.
+  useEffect(() => {
+    AsyncStorage.getItem(LAST_EMAIL_KEY)
+      .then((saved) => {
+        if (saved) setEmail((current) => current || saved);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleLogin() {
-    if (!email || !password) {
+    const trimmedEmail = email.trim();
+    const missing = { email: !trimmedEmail, password: !password };
+    setInvalidFields(missing);
+
+    if (missing.email || missing.password) {
+      haptics.warning();
+      setError(
+        missing.email && missing.password
+          ? 'Digite seu email e sua senha.'
+          : missing.email
+            ? 'Digite seu email.'
+            : 'Digite sua senha.'
+      );
       return;
     }
 
+    setError(null);
+    setIsLoading(true);
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const { access_token, farmId } = response.data;
-      login(access_token, farmId);
-    } catch {
-      Alert.alert('Falha no login', 'Verifique seu email e senha e tente novamente.');
+      const { data } = await api.post('/auth/login', { email: trimmedEmail, password });
+      AsyncStorage.setItem(LAST_EMAIL_KEY, trimmedEmail).catch(() => {});
+      haptics.success();
+      login(data.access_token, data.farmId ?? null);
+    } catch (err) {
+      haptics.error();
+      setInvalidFields({ email: false, password: true });
+      setError(loginErrorMessage(err));
+    } finally {
+      setIsLoading(false);
     }
   }
 
   return (
-    <>
+    <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}>
-        <Stack.Screen options={{ title: 'Home', headerShown: false }} />
-        <Container>
-          <ScrollView contentContainerStyle={styles.scrollView} keyboardShouldPersistTaps="handled">
-            <View style={styles.container}>
-              <View style={styles.header}>
-                <Text style={styles.title}>DR Alimentadores</Text>
-                <Image source={logo} style={styles.logo} />
-              </View>
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View style={styles.speak}>
+            <SpeakButton text={HELP_SPEECH} />
+          </View>
 
-              <View style={styles.form}>
-                <Input
-                  iconName="mail"
-                  placeholder="Digite seu email"
-                  onChangeText={setEmail}
-                  value={email}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                <Input
-                  iconName="lock"
-                  placeholder="Digite sua senha"
-                  isPassword
-                  autoCapitalize="none"
-                  secureTextEntry
-                  onChangeText={setPassword}
-                  value={password}
-                />
-              </View>
+          <View style={styles.brand}>
+            <Image
+              source={logo}
+              style={styles.logo}
+              accessibilityRole="image"
+              accessibilityLabel="Logo DR Pescados"
+            />
+            <AppText variant="question" align="center" accessibilityRole="header">
+              DR Pescados
+            </AppText>
+            <AppText variant="bodyRegular" color={colors.textSecondary} align="center">
+              Entre para ver seus alimentadores
+            </AppText>
+          </View>
 
-              <View style={styles.forgotPasswordContainer}>
-                <TouchableOpacity activeOpacity={0.7} onPress={handleForgotPassword}>
-                  <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
-                </TouchableOpacity>
-              </View>
+          <View style={styles.form}>
+            <TextField
+              label="Email"
+              value={email}
+              onChangeText={(v) => {
+                setEmail(v);
+                if (invalidFields.email) setInvalidFields({ ...invalidFields, email: false });
+              }}
+              invalid={invalidFields.email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              submitBehavior="submit"
+            />
+            <TextField
+              ref={passwordRef}
+              label="Senha"
+              password
+              value={password}
+              onChangeText={(v) => {
+                setPassword(v);
+                if (invalidFields.password) setInvalidFields({ ...invalidFields, password: false });
+              }}
+              invalid={invalidFields.password}
+              autoCapitalize="none"
+              autoComplete="current-password"
+              textContentType="password"
+              returnKeyType="go"
+              onSubmitEditing={handleLogin}
+            />
 
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleLogin}
-                style={styles.loginButton}>
-                <Text style={styles.loginButtonText}>Login</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </Container>
+            {error && <Banner variant="error" title={error} />}
+
+            <BigButton
+              title="Entrar"
+              icon="arrow-right"
+              iconPosition="right"
+              large
+              loading={isLoading}
+              onPress={handleLogin}
+            />
+          </View>
+
+          <View style={styles.help}>
+            <BigButton
+              title="Esqueci minha senha"
+              variant="ghost"
+              icon="lock-question"
+              onPress={() =>
+                openWhatsAppSupport(
+                  `Olá, esqueci a senha do aplicativo DR Pescados.${email.trim() ? ` Meu email é ${email.trim()}.` : ''} Podem me ajudar?`
+                )
+              }
+            />
+            <BigButton
+              title="Pedir ajuda no WhatsApp"
+              variant="ghost"
+              icon="whatsapp"
+              onPress={() => openWhatsAppSupport()}
+            />
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoidingView: {
+  safe: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  flex: {
     flex: 1,
   },
-  scrollView: {
+  content: {
     flexGrow: 1,
+    padding: spacing.xl,
+    gap: spacing.xl,
   },
-  container: {
-    flex: 1,
+  speak: {
+    alignItems: 'flex-end',
+  },
+  brand: {
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  header: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 32, // text-4xl
-    fontWeight: 'bold',
-    color: '#1F2937', // text-gray-800
-    marginBottom: 8,
+    gap: spacing.sm,
   },
   logo: {
-    width: 240, // w-60
-    height: 240, // h-60
+    width: 180,
+    height: 168,
     resizeMode: 'contain',
   },
   form: {
-    width: '100%',
-    marginBottom: 16,
+    gap: spacing.lg,
   },
-  forgotPasswordContainer: {
-    width: '100%',
-    alignItems: 'flex-start',
-    padding: 16,
-  },
-  forgotPasswordText: {
-    color: '#6B7280', // text-gray-500
-    fontSize: 14,
-  },
-  loginButton: {
-    height: 48,
-    width: '100%',
-    backgroundColor: '#2563EB', // bg-blue-600
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
+  help: {
+    marginTop: 'auto',
+    gap: spacing.xs,
   },
 });

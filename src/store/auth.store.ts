@@ -15,7 +15,7 @@ interface AuthState {
   farmId: number | null;
   setToken: (token: string | null) => void;
   setUser: (user: User | null) => void;
-  login: (token: string, farmId: number) => void;
+  login: (token: string, farmId: number | null) => void;
   logout: () => void;
 }
 
