@@ -92,7 +92,7 @@ O app é feito para produtores com pouca instrução formal: botões grandes, í
 
    > Variáveis com prefixo `EXPO_PUBLIC_` são embutidas no bundle do app e **ficam visíveis para qualquer pessoa** que inspecione o APK/IPA. Nunca coloque segredos nelas.
 
-   > Em aparelho físico, `localhost` aponta para o próprio celular. Use o IP da sua máquina na rede local ou o script `android-local` (veja abaixo).
+   > Use sempre o **IP do Mac na rede** (`ipconfig getifaddr en0`), no celular e no emulador. `localhost` aponta para o próprio aparelho, e o Expo Go 58 não aceita `http://10.0.2.2` (o atalho do emulador para o Mac) — a requisição falha com `Network Error`. O IP pode mudar quando o roteador reinicia.
 
 ## Executando o projeto
 
