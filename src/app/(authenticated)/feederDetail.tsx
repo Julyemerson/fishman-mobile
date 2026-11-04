@@ -1,5 +1,4 @@
-import { MaterialIcons } from '@expo/vector-icons';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Switch, TextInput, Alert } from 'react-native';
 
@@ -9,12 +8,14 @@ import SplashScreen from '@/components/SplashScreen';
 import api from '@/services/api';
 import { useFarmStore } from '@/store/farm.store';
 import { useFeederStore } from '@/store/feeder.store';
-import { IFeeder } from '@/types/feeder';
+import { FEEDER_STATUS, IFeeder } from '@/types/feeder';
 import formatTime from '@/utils/formatTime';
 
 export default function FeederDetail() {
   const [isActiveFeeder, setIsActiveFeeder] = useState(false);
   const [selectedFeeder, setSelectedFeeder] = useState<IFeeder>();
+  const [initialWeight, setInitialWeight] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const { feederId } = useLocalSearchParams();
   const { feeder, isLoading } = useFeederStore();
@@ -30,7 +31,8 @@ export default function FeederDetail() {
 
       if (foundFeeder) {
         setSelectedFeeder(foundFeeder);
-        setIsActiveFeeder(foundFeeder.isActive === 2);
+        setIsActiveFeeder(foundFeeder.isActive === FEEDER_STATUS.ACTIVE);
+        setInitialWeight(String(foundFeeder.initialDistributedWeight ?? ''));
       }
     }
   }, [feeder, feederId]);
@@ -47,22 +49,32 @@ export default function FeederDetail() {
   }
 
   async function handleSaveFeederDetails() {
-    // Lógica para salvar os detalhes do alimentador
-    const isFeederActiveApi = isActiveFeeder ? 2 : 1;
+    const weight = Number(initialWeight.replace(',', '.'));
+    if (initialWeight.trim() === '' || Number.isNaN(weight) || weight < 0) {
+      Alert.alert('Valor inválido', 'Informe uma quantidade de ração válida em kg.');
+      return;
+    }
 
-    await api.patch(`/feeders/${feederId}`, {
-      isActive: isFeederActiveApi,
-      // Outros dados a serem atualizados
-    });
-    Alert.alert('Sucesso', 'Detalhes do alimentador salvos com sucesso!', [
-      { text: 'OK', onPress: () => router.replace('/') },
-    ]);
+    setIsSaving(true);
+    try {
+      await api.patch(`/feeders/${feederId}`, {
+        isActive: isActiveFeeder ? FEEDER_STATUS.ACTIVE : FEEDER_STATUS.INACTIVE,
+        initialDistributedWeight: weight,
+      });
+      Alert.alert('Sucesso', 'Detalhes do alimentador salvos com sucesso!', [
+        { text: 'OK', onPress: () => router.replace('/') },
+      ]);
+    } catch (error: any) {
+      console.error('Erro ao salvar alimentador:', error.response?.data || error.message);
+      Alert.alert('Erro', 'Não foi possível salvar os detalhes do alimentador. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   if (isLoading) {
     return <SplashScreen />;
   }
-
 
   return (
     <Container>
@@ -86,8 +98,9 @@ export default function FeederDetail() {
         <View style={styles.inputInitialWeight}>
           <TextInput
             style={styles.inputInitialWeightText}
-            defaultValue={selectedFeeder?.initialDistributedWeight.toString()}
-            keyboardType="number-pad"
+            value={initialWeight}
+            onChangeText={setInitialWeight}
+            keyboardType="decimal-pad"
           />
           <Text style={styles.inputInitialWeightText}>kg</Text>
         </View>
@@ -112,7 +125,12 @@ export default function FeederDetail() {
         </View>
       </View>
       <View style={styles.containerButton}>
-        <Button style={styles.btnSave} title="Salvar" onPress={handleSaveFeederDetails} />
+        <Button
+          style={styles.btnSave}
+          title={isSaving ? 'Salvando...' : 'Salvar'}
+          onPress={handleSaveFeederDetails}
+          disabled={isSaving}
+        />
         <Button title="Voltar" onPress={() => router.back()} />
       </View>
     </Container>

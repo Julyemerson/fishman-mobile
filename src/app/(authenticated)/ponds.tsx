@@ -37,6 +37,7 @@ export default function Ponds() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
         const { data } = await api.get(`/ponds/farm/${farmId}`);
         setData(data);
@@ -68,8 +69,10 @@ export default function Ponds() {
           <Text style={styles.headerSecondaryText}>Clique para selecionar o Viveiro</Text>
         </View>
 
-        {data && data?.length > 0 ? (
-          <PondsList ponds={data ?? []} onPress={handlePondPress} />
+        {error ? (
+          <Text style={[styles.supportText, styles.errorText]}>{error}</Text>
+        ) : data && data.length > 0 ? (
+          <PondsList ponds={data} onPress={handlePondPress} />
         ) : (
           <Text style={styles.supportText}>Nenhum Viveiro Encontrado</Text>
         )}
@@ -124,6 +127,9 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontSize: 14,
     textAlign: 'center',
+  },
+  errorText: {
+    color: '#C62828',
   },
   headerContainer: {
     marginTop: 10,

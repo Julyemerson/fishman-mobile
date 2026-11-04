@@ -40,7 +40,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        set({ token: null, user: null, isAuthenticated: false });
+        set({ token: null, user: null, farmId: null, isAuthenticated: false });
       },
     }),
     {
@@ -49,7 +49,13 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         token: state.token,
         user: state.user,
+        farmId: state.farmId,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.isAuthenticated = !!state.token;
+        }
+      },
     }
   )
 );

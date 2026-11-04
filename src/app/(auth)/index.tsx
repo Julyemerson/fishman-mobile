@@ -38,8 +38,8 @@ export default function App() {
       const response = await api.post('/auth/login', { email, password });
       const { access_token, farmId } = response.data;
       login(access_token, farmId);
-    } catch (error: any) {
-      Alert.alert('Falha no Login: verifique email e senha');
+    } catch {
+      Alert.alert('Falha no login', 'Verifique seu email e senha e tente novamente.');
     }
   }
 

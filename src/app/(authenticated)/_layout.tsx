@@ -1,4 +1,4 @@
-import { MaterialIcons, AntDesign } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 

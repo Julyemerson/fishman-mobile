@@ -11,3 +11,8 @@ export interface IFeeder {
   feedInterval: number;
   initialDistributedWeight: number;
 }
+
+export const FEEDER_STATUS = {
+  INACTIVE: 1,
+  ACTIVE: 2,
+} as const;
