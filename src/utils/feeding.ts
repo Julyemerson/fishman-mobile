@@ -1,7 +1,11 @@
 import type { IFeedingLog } from '@/types/feeder';
 import { isoToMinutes } from '@/utils/feedTime';
 
-/** kg que saíram hoje: doses enviadas ao equipamento ou confirmadas por ele. */
+/**
+ * kg que saíram hoje: doses enviadas ao equipamento ou confirmadas por ele.
+ * UNCONFIRMED fica de fora: o equipamento nunca respondeu, então não dá para
+ * afirmar que a ração saiu.
+ */
 export function sumDeliveredKg(logs: IFeedingLog[]): number {
   return logs
     .filter((log) => log.status === 'CONFIRMED' || log.status === 'SUCCESS')
@@ -71,6 +75,7 @@ function scheduleOf(feeder: ScheduleFeeder) {
  * Quando sai a próxima ração, seguindo a regra do cron do backend (isDoseDue):
  * dentro da janela, a dose sai `interval` minutos depois da última; se a última
  * falhou ou ficou pendente (ou ainda não houve dose hoje), sai no próximo minuto.
+ * UNCONFIRMED conta como dose dada: o backend não a repete e segue o intervalo.
  * Usa o relógio do aparelho, que está no mesmo fuso da fazenda.
  */
 export function getNextFeed(

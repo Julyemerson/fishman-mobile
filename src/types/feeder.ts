@@ -28,7 +28,18 @@ export interface IFeeder {
   updatedAt: string;
 }
 
-export type FeedingStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CONFIRMED' | 'CANCELLED';
+/**
+ * PENDING → SUCCESS (enviada, aguardando o equipamento) → CONFIRMED (o equipamento confirmou).
+ * UNCONFIRMED: enviada e reenviada, mas o equipamento nunca respondeu — não se sabe se a
+ * ração saiu. O backend não repete a dose (para não dar em dobro) e segue o horário normal.
+ */
+export type FeedingStatus =
+  | 'PENDING'
+  | 'SUCCESS'
+  | 'FAILED'
+  | 'CONFIRMED'
+  | 'CANCELLED'
+  | 'UNCONFIRMED';
 
 export interface IFeedingLog {
   id: string;
@@ -39,4 +50,7 @@ export interface IFeedingLog {
   status: FeedingStatus;
   triggeredAt: string;
   executedAt: string | null;
+  /** Quantas vezes o comando foi enviado ao equipamento (reenvios sem resposta). */
+  attempts?: number;
+  lastAttemptAt?: string | null;
 }
