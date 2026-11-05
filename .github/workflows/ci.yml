@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, formatação e tipos
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      # Gerado pelo Expo e ignorado no git; o TypeScript precisa dele.
+      - name: Criar expo-env.d.ts
+        run: echo '/// <reference types="expo/types" />' > expo-env.d.ts
+
+      - name: ESLint
+        run: pnpm exec eslint "**/*.{js,jsx,ts,tsx}" --max-warnings 0
+
+      - name: Prettier
+        run: pnpm exec prettier -c "**/*.{js,jsx,ts,tsx,json}"
+
+      - name: Tipos (TypeScript)
+        run: pnpm exec tsc --noEmit
+
+      - name: Versões das dependências compatíveis com o Expo
+        run: pnpm exec expo install --check
