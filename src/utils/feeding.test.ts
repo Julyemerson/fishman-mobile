@@ -45,6 +45,7 @@ describe('sumDeliveredKg', () => {
       makeLog('PENDING', { doseKg: 10 }),
       makeLog('FAILED', { doseKg: 10 }),
       makeLog('CANCELLED', { doseKg: 10 }),
+      makeLog('UNCONFIRMED', { doseKg: 10 }),
     ];
     expect(sumDeliveredKg(logs)).toBe(5);
   });
@@ -160,6 +161,11 @@ describe('getNextFeed', () => {
     expect(getNextFeed(feeder, logs, today(11, 30))).toEqual({ minutes: 690, tomorrow: false });
   });
 
+  it('dose sem resposta (UNCONFIRMED) segue o intervalo, sem repetir no próximo minuto', () => {
+    const logs = [makeLog('UNCONFIRMED', { triggeredAt: today(10).toISOString() })];
+    expect(getNextFeed(feeder, logs, today(10, 15))).toEqual({ minutes: 660, tomorrow: false });
+  });
+
   it('se a próxima passaria do fim da janela, fica para amanhã', () => {
     const logs = [makeLog('SUCCESS', { triggeredAt: today(16, 30).toISOString() })];
     expect(getNextFeed(feeder, logs, today(16, 40))).toEqual({ minutes: 480, tomorrow: true });
@@ -176,6 +182,10 @@ describe('getRemainingDoses', () => {
       makeLog('CANCELLED'),
     ];
     expect(getRemainingDoses(feeder, logs, today(12))).toBe(6);
+  });
+
+  it('dose sem resposta (UNCONFIRMED) conta como dada: o backend não a repete', () => {
+    expect(getRemainingDoses(feeder, [makeLog('UNCONFIRMED')], today(12))).toBe(8);
   });
 
   it('sem doses, faltam todas as planejadas', () => {

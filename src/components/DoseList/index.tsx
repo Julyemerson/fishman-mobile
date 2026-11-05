@@ -39,6 +39,13 @@ const STATUS: Record<
     text: colors.onErrorSoft,
     row: colors.errorSoft,
   },
+  UNCONFIRMED: {
+    label: 'Sem resposta',
+    icon: 'help',
+    circle: colors.warningBorder,
+    text: colors.onWarning,
+    row: colors.warning,
+  },
   CANCELLED: {
     label: 'Cancelada',
     icon: 'minus',
