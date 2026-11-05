@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   check:
-    name: Lint, formatação e tipos
+    name: Lint, formatação, tipos e testes
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -39,6 +39,9 @@ jobs:
 
       - name: Tipos (TypeScript)
         run: pnpm exec tsc --noEmit
+
+      - name: Testes
+        run: pnpm test --ci
 
       - name: Versões das dependências compatíveis com o Expo
         run: pnpm exec expo install --check

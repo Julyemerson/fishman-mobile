@@ -3,6 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-jsx",
+    // TypeScript 6 não carrega mais @types/* automaticamente; os globais do Jest precisam ser listados.
+    "types": ["jest"],
 
     "paths": {
       "@/*": ["./src/*"]
