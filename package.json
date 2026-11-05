@@ -9,7 +9,8 @@
     "start": "expo start",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.4.2",
@@ -44,17 +45,32 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
+    "@types/jest": "30.0.0",
     "@types/react": "~19.3.0",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
     "eslint": "^8.57.0",
     "eslint-config-universe": "^12.0.1",
+    "jest": "~30.5.2",
+    "jest-expo": "~58.0.14",
+    "msw": "^3.0.3",
     "prettier": "^3.2.5",
     "typescript": "~6.0.3"
   },
   "eslintConfig": {
     "extends": "universe/native",
-    "root": true
+    "root": true,
+    "overrides": [
+      {
+        "files": [
+          "**/*.test.ts",
+          "**/*.test.tsx"
+        ],
+        "env": {
+          "jest": true
+        }
+      }
+    ]
   },
   "private": true,
   "packageManager": "pnpm@10.24.0"
