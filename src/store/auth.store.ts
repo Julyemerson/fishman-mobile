@@ -2,10 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-interface User {
-  farmId: string;
+export type UserRole = 'USER' | 'ADMIN';
+
+export interface User {
+  id?: number;
+  farmId?: string;
   name: string;
   email: string;
+  /** Vem do GET /auth/me. Sessões antigas não têm até a primeira busca. */
+  role?: UserRole;
 }
 
 interface AuthState {
@@ -59,3 +64,9 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+/**
+ * Mostra as ferramentas de desenvolvedor. É só para esconder a tela: quem
+ * protege de verdade é o backend, que recusa (403) as rotas de admin.
+ */
+export const selectIsAdmin = (state: AuthState) => state.user?.role === 'ADMIN';
