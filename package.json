@@ -10,7 +10,7 @@
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
     "web": "expo start --web",
-    "test": "jest"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.4.2",
@@ -53,6 +53,7 @@
     "eslint-config-universe": "^12.0.1",
     "jest": "~30.5.2",
     "jest-expo": "~58.0.14",
+    "msw": "^3.0.3",
     "prettier": "^3.2.5",
     "typescript": "~6.0.3"
   },
