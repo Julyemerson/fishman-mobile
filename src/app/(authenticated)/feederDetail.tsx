@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 
 import { DoseList } from '@/components/DoseList';
+import { FeederTestPanel } from '@/components/FeederTestPanel';
 import { PowerToggle } from '@/components/PowerToggle';
 import {
   AppHeader,
@@ -20,7 +21,7 @@ import {
 } from '@/components/ui';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import api from '@/services/api';
-import { useAuthStore } from '@/store/auth.store';
+import { selectIsAdmin, useAuthStore } from '@/store/auth.store';
 import { useFeederStore } from '@/store/feeder.store';
 import { colors, radius, spacing } from '@/theme';
 import { IFeeder } from '@/types/feeder';
@@ -49,6 +50,7 @@ export default function FeederDetail() {
   const router = useRouter();
   const { feederId } = useLocalSearchParams<{ feederId: string }>();
   const farmId = useAuthStore((s) => s.farmId);
+  const isAdmin = useAuthStore(selectIsAdmin);
   const { feeders, logsByFeeder, isLoading, isRefreshing, lastUpdated, loadFarm, patchFeeder } =
     useFeederStore();
   const [isToggling, setIsToggling] = useState(false);
@@ -308,6 +310,8 @@ export default function FeederDetail() {
           }
         />
       </View>
+
+      {isAdmin && <FeederTestPanel feeder={feeder} />}
     </Screen>
   );
 }
