@@ -171,6 +171,7 @@ export default function FeederDetail() {
       header={
         <AppHeader
           title={feeder.name}
+          titleBelow
           back={back}
           right={
             <View style={styles.headerRight}>

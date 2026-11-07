@@ -95,6 +95,7 @@ export default function Inicio() {
   const header = (
     <AppHeader
       title={farm.name || 'DR Pescados'}
+      titleBelow
       showLogo
       right={
         <View style={styles.headerRight}>
