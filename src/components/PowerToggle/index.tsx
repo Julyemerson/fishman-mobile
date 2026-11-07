@@ -10,7 +10,7 @@ interface PowerToggleProps {
   onPress: () => void;
 }
 
-/** Botão enorme de ligar/desligar: o estado mais importante da tela. */
+/** Ligar/desligar: o estado mais importante da tela, sem ocupar metade dela. */
 export function PowerToggle({ isOn, busy, onPress }: PowerToggleProps) {
   return (
     <Tap
@@ -29,17 +29,17 @@ export function PowerToggle({ isOn, busy, onPress }: PowerToggleProps) {
         {busy ? (
           <ActivityIndicator size="large" color={isOn ? colors.primary : colors.onOff} />
         ) : (
-          <Icon name="power" size={44} color={isOn ? colors.primary : colors.onOff} />
+          <Icon name="power" size={30} color={isOn ? colors.primary : colors.onOff} />
         )}
       </View>
       <View style={styles.texts}>
         <AppText
-          variant="display"
+          variant="title"
           color={isOn ? colors.onPrimary : colors.onOff}
           style={styles.state}>
           {isOn ? 'LIGADO' : 'DESLIGADO'}
         </AppText>
-        <AppText variant="body" color={isOn ? colors.onPrimaryMuted : colors.primary}>
+        <AppText variant="label" color={isOn ? colors.onPrimaryMuted : colors.primary}>
           {busy ? 'Aguarde…' : isOn ? 'Toque para desligar' : 'Toque para ligar'}
         </AppText>
       </View>
@@ -51,9 +51,10 @@ const styles = StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.lg,
-    padding: spacing.xl,
-    borderRadius: radius.xl,
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.lg,
   },
   on: {
     backgroundColor: colors.primary,
@@ -71,9 +72,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
   },
   circle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   state: {
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 24,
+    lineHeight: 30,
   },
 });

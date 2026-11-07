@@ -6,9 +6,10 @@ import { FeederCard } from '@/components/FeederCard';
 import {
   AppHeader,
   AppText,
-  BigButton,
   Card,
   EmptyState,
+  MoreMenu,
+  MoreMenuItem,
   ProgressRing,
   Screen,
   Skeleton,
@@ -76,11 +77,31 @@ export default function Inicio() {
     );
   }
 
+  // Ações secundárias no "⋮": ajuda fica a um toque, mas sem chamar atenção.
+  const menuItems: MoreMenuItem[] = [
+    { label: 'Ajuda no WhatsApp', icon: 'whatsapp', onPress: () => openWhatsAppSupport() },
+    ...(__DEV__
+      ? [
+          {
+            label: 'Ver componentes',
+            icon: 'palette-outline' as const,
+            onPress: () => router.push('/componentes'),
+          },
+        ]
+      : []),
+    { label: 'Sair da conta', icon: 'logout', onPress: handleLogout, destructive: true },
+  ];
+
   const header = (
     <AppHeader
       title={farm.name || 'DR Pescados'}
       showLogo
-      right={feeders.length > 0 ? <SpeakButton text={speech} /> : undefined}
+      right={
+        <View style={styles.headerRight}>
+          {feeders.length > 0 && <SpeakButton text={speech} />}
+          <MoreMenu items={menuItems} />
+        </View>
+      }
     />
   );
 
@@ -119,18 +140,7 @@ export default function Inicio() {
   }
 
   return (
-    <Screen
-      header={header}
-      refreshing={isRefreshing}
-      onRefresh={() => load({ pull: true })}
-      footer={
-        <BigButton
-          title="Pedir ajuda no WhatsApp"
-          icon="whatsapp"
-          variant="secondary"
-          onPress={() => openWhatsAppSupport()}
-        />
-      }>
+    <Screen header={header} refreshing={isRefreshing} onRefresh={() => load({ pull: true })}>
       {error === 'offline' && (
         <View style={styles.offlineBar} accessibilityRole="alert">
           <AppText variant="body" color={colors.onPrimary}>
@@ -198,18 +208,6 @@ export default function Inicio() {
           ))}
         </>
       )}
-
-      <View style={styles.bottomActions}>
-        {__DEV__ && (
-          <BigButton
-            title="Ver componentes"
-            icon="palette-outline"
-            variant="ghost"
-            onPress={() => router.push('/componentes')}
-          />
-        )}
-        <BigButton title="Sair da conta" icon="logout" variant="ghost" onPress={handleLogout} />
-      </View>
     </Screen>
   );
 }
@@ -266,9 +264,10 @@ const styles = StyleSheet.create({
   emptyBox: {
     minHeight: 420,
   },
-  bottomActions: {
-    marginTop: spacing.xl,
-    gap: spacing.sm,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   skeletonLines: {
     gap: spacing.sm,
