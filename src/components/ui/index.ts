@@ -8,6 +8,8 @@ export type { ChoiceOption } from './ChoiceChips';
 export { EmptyState } from './EmptyState';
 export { Icon } from './Icon';
 export type { IconName } from './Icon';
+export { MoreMenu } from './MoreMenu';
+export type { MoreMenuItem } from './MoreMenu';
 export { ProgressBar, ProgressRing } from './Progress';
 export { Screen } from './Screen';
 export { Skeleton } from './Skeleton';

@@ -14,6 +14,7 @@ import {
   EmptyState,
   Icon,
   IconName,
+  MoreMenu,
   ProgressRing,
   Screen,
   Skeleton,
@@ -167,7 +168,28 @@ export default function FeederDetail() {
 
   return (
     <Screen
-      header={<AppHeader title={feeder.name} back={back} right={<SpeakButton text={speech} />} />}
+      header={
+        <AppHeader
+          title={feeder.name}
+          titleBelow
+          back={back}
+          right={
+            <View style={styles.headerRight}>
+              <SpeakButton text={speech} />
+              <MoreMenu
+                items={[
+                  {
+                    label: 'Ajuda no WhatsApp',
+                    icon: 'whatsapp',
+                    onPress: () =>
+                      openWhatsAppSupport(`Olá, preciso de ajuda com o ${feeder.name}.`),
+                  },
+                ]}
+              />
+            </View>
+          }
+        />
+      }
       refreshing={isRefreshing}
       onRefresh={() => load({ pull: true })}
       footer={
@@ -175,7 +197,6 @@ export default function FeederDetail() {
           title="Mudar configuração"
           icon="tune-variant"
           variant="secondary"
-          large
           onPress={goToConfig}
         />
       }>
@@ -330,6 +351,11 @@ function ConfigChip({ icon, label }: { icon: IconName; label: string }) {
 const styles = StyleSheet.create({
   section: {
     gap: spacing.md,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   signalOk: {
     flexDirection: 'row',
