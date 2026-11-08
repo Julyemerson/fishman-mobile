@@ -17,28 +17,41 @@ interface AppHeaderProps {
   /** Mostra a logo antes do título (tela inicial). */
   showLogo?: boolean;
   right?: ReactNode;
+  /**
+   * Título numa linha própria, abaixo dos botões (até 2 linhas). Para nomes
+   * longos (fazenda, alimentador) que seriam cortados entre "Voltar" e "Ouvir".
+   */
+  titleBelow?: boolean;
 }
 
-export function AppHeader({ title, back, showLogo, right }: AppHeaderProps) {
+export function AppHeader({ title, back, showLogo, right, titleBelow }: AppHeaderProps) {
+  if (titleBelow) {
+    return (
+      <View style={styles.stacked}>
+        <View style={styles.stackedRow}>
+          <View style={styles.side}>
+            {back && <BackButton back={back} />}
+            {showLogo && (
+              <Image source={logo} style={styles.logo} accessibilityIgnoresInvertColors />
+            )}
+          </View>
+          <View style={[styles.side, styles.sideRight]}>{right}</View>
+        </View>
+        <AppText
+          variant="title"
+          numberOfLines={2}
+          accessibilityRole="header"
+          style={styles.titleBelow}>
+          {title}
+        </AppText>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.header}>
       <View style={styles.side}>
-        {back && (
-          <Tap
-            onPress={() => {
-              haptics.tap();
-              back.onPress();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={back.label ?? 'Voltar'}
-            hitSlop={8}
-            style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
-            <Icon name="chevron-left" size={32} color={colors.primary} />
-            <AppText variant="body" color={colors.primary} style={styles.backText}>
-              {back.label ?? 'Voltar'}
-            </AppText>
-          </Tap>
-        )}
+        {back && <BackButton back={back} />}
         {showLogo && <Image source={logo} style={styles.logo} accessibilityIgnoresInvertColors />}
       </View>
 
@@ -52,6 +65,25 @@ export function AppHeader({ title, back, showLogo, right }: AppHeaderProps) {
 
       <View style={[styles.side, styles.sideRight]}>{right}</View>
     </View>
+  );
+}
+
+function BackButton({ back }: { back: NonNullable<AppHeaderProps['back']> }) {
+  return (
+    <Tap
+      onPress={() => {
+        haptics.tap();
+        back.onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={back.label ?? 'Voltar'}
+      hitSlop={8}
+      style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
+      <Icon name="chevron-left" size={32} color={colors.primary} />
+      <AppText variant="body" color={colors.primary} style={styles.backText}>
+        {back.label ?? 'Voltar'}
+      </AppText>
+    </Tap>
   );
 }
 
@@ -98,6 +130,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  stacked: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: spacing.xs,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  stackedRow: {
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  titleBelow: {
+    paddingHorizontal: spacing.xs,
   },
   side: {
     flexDirection: 'row',
